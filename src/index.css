@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'Monsterrat'; 
+  src: url('./assets/fonts/Montserrat.ttf') format('truetype');
+
+}
+
+@font-face {
+  font-family: 'Orbitron'; 
+  src: url('./assets/fonts/Orbitron.ttf') format('truetype');
+  
+}
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;
