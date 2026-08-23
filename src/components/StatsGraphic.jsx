@@ -19,7 +19,7 @@ export default function StatsGraphic() {
       {/* Adjusted 3 Overlapping Background Circles */}
       <div className="absolute bottom-0 w-full h-full overflow-hidden pointer-events-none z-0 flex items-end justify-center">
          {/* Left Overlapping Circle */}
-         <div className="absolute -bottom-[30%] -left-[20%] w-[100%] aspect-square rounded-full bg-[#181b26] opacity-90"></div>
+         <div className="absolute bottom-[30%] left-[20%] w-full aspect-square rounded-full bg-[#181b26] opacity-90"></div>
          
          {/* Right Overlapping Circle */}
          <div className="absolute -bottom-[20%] -right-[20%] w-[100%] aspect-square rounded-full bg-[#1a1d2a] opacity-90"></div>
