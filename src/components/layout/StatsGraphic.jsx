@@ -1,4 +1,4 @@
-import logo from '../assets/Icon/alpha_logo.png'; 
+import logo from '../../assets/icons/alpha_logo.png';
 
 // Custom SVG with black strokes removed for a cleaner, modern look
 const CustomDatabaseIcon = () => (
