@@ -1,29 +1,36 @@
-import React from 'react';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { useAdmin } from "../context/AdminContext";
 
-// Reusable component for the dashboard modules
-function ModuleCard({ icon, title, description }) {
+// Premium Module Card (Fixed Height Independence)
+function ModuleCard({ icon, title, description, path }) {
+  const navigate = useNavigate();
+  const { adminProfile } = useAdmin();
+
   return (
-    <div className="group flex items-center p-8 bg-[#111216]/80 backdrop-blur-sm border border-gray-800/50 rounded-3xl transition-all duration-300 hover:border-[#00e676] cursor-pointer w-full h-[140px] shadow-lg">
-      
-      {/* 
-        This container controls the "coming close" effect. 
-        It starts with gap-8 and shrinks to gap-5 on hover.
-      */}
-      <div className="flex items-center gap-8 transition-all duration-300 group-hover:gap-5 w-full">
-        
+    <div
+      onClick={() => navigate(path)}
+      className="group relative flex flex-col justify-center p-8 bg-[#0a0b10]/80 backdrop-blur-md border border-gray-800/50 rounded-[2rem] transition-all duration-500 hover:-translate-y-2 hover:bg-[#151722]/90 hover:shadow-[0_20px_40px_rgba(0,230,118,0.06)] hover:border-gray-700/80 cursor-pointer w-full aspect-square overflow-hidden"
+    >
+      {/* Premium Top Border Highlight */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-0 h-[2px] bg-[#00e676] transition-all duration-500 group-hover:w-[60%] opacity-0 group-hover:opacity-100 shadow-[0_0_15px_#00e676]"></div>
+
+      {/* Inner Content */}
+      <div className="flex flex-col items-start gap-8 transition-all duration-500 group-hover:gap-5 w-full">
         {/* Icon */}
-        <i className={`${icon} text-4xl text-gray-400 group-hover:text-[#00e676] transition-colors duration-300 font-light`}></i>
-        
+        <i
+          className={`${icon} text-5xl text-gray-500 group-hover:text-[#00e676] transition-colors duration-500 font-light`}
+        ></i>
+
         {/* Text Container */}
-        <div className="flex flex-col text-left transition-all duration-300">
-          <h3 className="text-xl font-semibold text-white group-hover:text-[#00e676] transition-colors duration-300">
+        <div className="flex flex-col text-left transition-all duration-500">
+          <h3 className="text-xl md:text-2xl font-semibold text-white group-hover:text-[#00e676] transition-colors duration-500 mb-2">
             {title}
           </h3>
-          <p className="text-sm text-gray-500 group-hover:text-[#00e676]/80 transition-colors duration-300 leading-snug mt-1">
+          <p className="text-sm text-gray-500 group-hover:text-[#00e676]/80 transition-colors duration-500 leading-relaxed">
             {description}
           </p>
         </div>
-        
       </div>
     </div>
   );
@@ -31,74 +38,88 @@ function ModuleCard({ icon, title, description }) {
 
 export default function AdminDashboard() {
   return (
-    /* Main Background with Dark Theme and Custom Grid Pattern */
-    <div 
-      className="min-h-screen w-full bg-[#0a0b10] flex flex-col items-center pt-24 pb-12 px-4 font-sans relative overflow-hidden"
+    /* Main Background with Custom Linear Gradient and Grid Pattern */
+    <div
+      // Removed the solid bg-[#07080a] class so the gradient shows through
+      className="min-h-screen w-full flex flex-col items-center pt-24 pb-12 px-4 font-sans relative overflow-hidden"
       style={{
         backgroundImage: `
-          linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-          linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px)
+          linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+          linear-gradient(to bottom, #131926 0%, #05070A 100%)
         `,
-        backgroundSize: '40px 40px'
+        // The first two sizes (40px) apply to the grid, the last (100%) ensures the gradient fills the screen
+        backgroundSize: "40px 40px, 40px 40px, 100% 100%",
       }}
     >
-      
+      {/* Permanent White Ambient Light Behind the Grid */}
+      <div className="absolute top-[55%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70vw] max-w-[800px] aspect-square bg-white/[0.04] blur-[146px] rounded-full pointer-events-none z-0"></div>
+
       {/* Header Section */}
       <div className="flex flex-col items-center mb-16 relative z-10 text-center">
-        
         {/* Profile Image with subtle green glow behind it */}
         <div className="relative mb-6">
-          <div className="absolute inset-0 bg-[#00e676] blur-2xl opacity-20 rounded-full"></div>
-          <img 
-            src="https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" 
-            alt="Admin Profile" 
-            className="w-20 h-20 rounded-full border-2 border-gray-700/50 relative z-10 object-cover shadow-2xl"
+          {/* Keep the glow effect */}
+          <div className="absolute inset-0 bg-[#00e676] blur-2xl opacity-10 rounded-full"></div>
+
+          {/* Only update the image source here */}
+          <img
+            src={adminProfile.avatar}
+            alt="Admin Profile"
+            className="w-20 h-20 rounded-full border border-gray-700/50 relative z-10 object-cover shadow-2xl"
           />
         </div>
 
         <h1 className="text-4xl md:text-5xl text-white font-bold tracking-wide mb-3">
           Welcome back, Admin
         </h1>
-        <p className="text-gray-400 text-sm md:text-base">
+        <p className="text-gray-500 text-sm md:text-base">
           Select a management module to begin administrative operations.
         </p>
       </div>
 
-      {/* Grid of Modules */}
-      {/* Using an asymmetrical grid layout to accommodate the 5th "Dashboard" card elegantly */}
-      <div className="w-full max-w-5xl z-10 grid grid-cols-1 md:grid-cols-2 gap-6 px-4">
-        
-        <ModuleCard 
-          icon="ri-dashboard-line" 
-          title="Dashboard" 
-          description="View overarching system metrics and health." 
-        />
-        
-        <ModuleCard 
-          icon="ri-terminal-window-line" 
-          title="AI Command Center" 
-          description="Execute NLP text commands." 
-        />
-        
-        {/* Formerly Document Vault -> Now Main Overview */}
-        <ModuleCard 
-          icon="ri-folder-2-line" 
-          title="Main Overview" 
-          description="Access generated certificates and ID cards." 
-        />
-        
-        <ModuleCard 
-          icon="ri-user-3-line" 
-          title="User Directory" 
-          description="Manage student and intern records." 
-        />
-        
-        <ModuleCard 
-          icon="ri-settings-4-line" 
-          title="System Logs" 
-          description="Monitor intent detection accuracy." 
+      {/* 
+        Grid of Modules 
+        Uses lg:grid-cols-3 to create a 3x3 layout. 
+        With 5 cards, the second row will center elegantly if needed, 
+        or flow naturally left-to-right depending on the screen size.
+      */}
+      {/* Inside AdminDashboard component */}
+      <div className="w-full max-w-4xl z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-4">
+        <ModuleCard
+          icon="ri-dashboard-line"
+          title="Dashboard"
+          description="View overarching system metrics and health."
+          path="/admin/dashboard/main-overview" // Added path
         />
 
+        <ModuleCard
+          icon="ri-terminal-window-line"
+          title="AI Command Center"
+          description="Execute NLP text commands."
+          path="/admin/ai-command/command-input" // Added path
+        />
+
+        <ModuleCard
+          icon="ri-folder-2-line"
+          title="System Logs"
+          description="Monitor intent detection accuracy."
+          path="/admin/system-logs/engine-performance" // Added path
+        />
+
+        <ModuleCard
+          icon="ri-user-3-line"
+          title="User Directory"
+          description="Manage student and intern records."
+          path="/admin/user-directory/manage-records" // Added path
+        />
+
+        <ModuleCard
+          icon="ri-settings-4-line"
+          title="Settings"
+          description="Check more settings."
+          path="/admin/settings/profile-settings" // Added path
+        />
       </div>
     </div>
   );
