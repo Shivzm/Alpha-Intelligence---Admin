@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import adminApi from '../../lib/adminApi';
 
@@ -58,7 +59,15 @@ export default function LoginForm() {
       
       {/* Password Field */}
       <div>
-        <label className="block text-gray-300 text-sm mb-1.5" htmlFor="password">Password</label>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="block text-gray-300 text-sm" htmlFor="password">Password</label>
+          <Link
+            to="/reset-password"
+            className="text-xs text-[#00e676] hover:text-[#00c868] transition-colors"
+          >
+            Forgot password?
+          </Link>
+        </div>
         <div className="relative flex items-center">
           <i className="ri-lock-line w-5 h-5 text-gray-500 absolute left-3 flex items-center justify-center"></i>
           <input 
