@@ -15,18 +15,53 @@
 @theme {
   --font-sans: 'Montserrat', system-ui, 'Segoe UI', Roboto, sans-serif;
   --font-display: 'Orbitron', system-ui, sans-serif;
+
+  /* 
+    1. MAP VARIABLES TO TAILWIND COLORS 
+    This tells Tailwind to create classes like `bg-surface`, `text-primary`, etc.
+  */
+  --color-base: var(--theme-base);
+  --color-surface: var(--theme-surface);
+  --color-input: var(--theme-input);
+  --color-primary: var(--theme-primary);
+  --color-muted: var(--theme-muted);
+  --color-divider: var(--theme-divider);
+  --color-brand: var(--theme-brand);
 }
 
-/*
-  Minimal, intentional reset only. The previous version of this file carried
-  over unmodified Vite scaffold styles (a fixed-width #root with side
-  borders, plus bare h1/h2/p element rules). Because those rules were not
-  wrapped in a Tailwind @layer, they sat outside Tailwind's cascade layers
-  and silently overrode the Tailwind utility classes used throughout the
-  app (e.g. the bare `h1 { font-size: 56px }` rule was beating the
-  `text-3xl` utility on the same element), and `border-inline` on #root
-  was the vertical line down each side of the page. Removed.
-*/
+@layer base {
+  /* 2. LIGHT MODE COLORS (Default) */
+  :root {
+    --theme-base: #f9fafb;     /* Very light gray for the main app background */
+    --theme-surface: #ffffff;  /* Pure white for cards/panels */
+    --theme-input: #f3f4f6;    /* Light gray for input fields */
+    --theme-primary: #111827;  /* Near black for headings */
+    --theme-muted: #6b7280;    /* Gray for descriptions */
+    --theme-divider: #e5e7eb;  /* Light border */
+    --theme-brand: #00c868;    /* Darker green for light mode contrast */
+  }
+
+  /* 3. DARK MODE COLORS */
+  .dark {
+    --theme-base: #07080a;     /* Deep black for main app background */
+    --theme-surface: #0c0d12;  /* Slightly lighter black for cards/panels */
+    --theme-input: #13151c;    /* Inner backgrounds for inputs */
+    --theme-primary: #ffffff;  /* Pure white for headings */
+    --theme-muted: #9ca3af;    /* Gray for descriptions */
+    --theme-divider: #1f2937;  /* Dark gray border */
+    --theme-brand: #00e676;    /* Bright neon green */
+  }
+
+  /* 4. AUTO-APPLY GLOBALS */
+  body {
+    background-color: var(--theme-base);
+    color: var(--theme-primary);
+    transition-property: color, background-color, border-color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+  }
+}
+
 * {
   box-sizing: border-box;
 }

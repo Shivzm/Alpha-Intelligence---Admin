@@ -125,13 +125,13 @@ export default function InternApplications() {
                       onClick={() => handleAction(row.id, 'Approved')}
                       className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 hover:border-emerald-500/50 px-4 py-1.5 rounded-md text-xs transition-colors flex items-center gap-1"
                     >
-                      <i className="ri-check-line"></i> Approve
+                      <i></i> Approve
                     </button>
                     <button 
                       onClick={() => handleAction(row.id, 'Rejected')}
                       className="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 hover:border-red-500/50 px-4 py-1.5 rounded-md text-xs transition-colors flex items-center gap-1"
                     >
-                      <i className="ri-close-line"></i> Reject
+                      <i></i> Reject
                     </button>
                   </td>
                 </tr>
