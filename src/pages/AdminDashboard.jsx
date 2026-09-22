@@ -1,11 +1,9 @@
-import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "../context/AdminContext";
 
 // Premium Module Card (Fixed Height Independence)
 function ModuleCard({ icon, title, description, path }) {
   const navigate = useNavigate();
-  const { adminProfile } = useAdmin();
 
   return (
     <div
@@ -37,6 +35,8 @@ function ModuleCard({ icon, title, description, path }) {
 }
 
 export default function AdminDashboard() {
+  const { adminProfile } = useAdmin();
+
   return (
     /* Main Background with Custom Linear Gradient and Grid Pattern */
     <div

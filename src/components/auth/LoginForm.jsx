@@ -19,7 +19,7 @@ export default function LoginForm() {
 
     // Check input against environment variables
     if (email === adminEmail && password === adminPassword) {
-      navigate('/dashboard'); 
+      navigate('/admin-dashboard'); 
     } else {
       setError('Invalid email or password.');
     }
