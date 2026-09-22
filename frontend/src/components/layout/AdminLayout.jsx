@@ -96,8 +96,8 @@ export default function AdminLayout() {
             icon="ri-terminal-window-line"
             label="AI Command Center"
             subItems={[
-              { label: "Command Input", path: "/admin/AI-Command/command-input" },
-              { label: "Model Telemetry", path: "/admin/AI-Command/telemetry" },
+              { label: "Command Input", path: "/admin/ai-command/command-input" },
+              { label: "Model Telemetry", path: "/admin/ai-command/telemetry" },
             ]}
           />
           <NavItem

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import adminApi from '../../lib/adminApi';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
@@ -8,20 +9,31 @@ export default function LoginForm() {
   const [error, setError] = useState('');
   
   const { login } = useAuth();
+  const apiUrl = import.meta.env.VITE_API_URL;
+  const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
 
-  const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
-  const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD;
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    if (email === adminEmail && password === adminPassword) {
-      // Simulate generating a secure JWT for the session
-      const mockSessionToken = btoa(email + Date.now().toString());
-      login(mockSessionToken, '/admin-dashboard'); 
-    } else {
-      setError('Invalid email or password.');
+    try {
+      if (!apiUrl && useMockData) {
+        const demoEmail = import.meta.env.VITE_DEMO_EMAIL || import.meta.env.VITE_ADMIN_EMAIL;
+        const demoPassword = import.meta.env.VITE_DEMO_PASSWORD || import.meta.env.VITE_ADMIN_PASSWORD;
+        if (email !== demoEmail || password !== demoPassword) {
+          throw new Error('Invalid demo credentials.');
+        }
+        login('demo-session', '/admin-dashboard');
+        return;
+      }
+
+      const result = await adminApi.login(email, password);
+      if (!result?.token) {
+        throw new Error('The login response did not include a token.');
+      }
+      login(result.token, '/admin-dashboard');
+    } catch (error) {
+      setError(error.message || 'Unable to sign in.');
     }
   };
 

@@ -92,7 +92,7 @@ export default function AdminDashboard() {
           icon="ri-terminal-window-line"
           title="AI Command Center"
           description="Execute NLP text commands."
-          path="/admin/AI-Command/command-input" 
+          path="/admin/ai-command/command-input" 
         />
 
         <ModuleCard

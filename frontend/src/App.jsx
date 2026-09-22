@@ -64,8 +64,8 @@ function App() {
                 <Route path="/admin/dashboard/analytics" element={<SystemAnalytics />} />
                 <Route path="/admin/dashboard/active-tasks" element={<ActiveTasks />} />
                 
-                <Route path="/admin/AI-Command/command-input" element={<CommandInput />} />
-                <Route path="/admin/AI-Command/telemetry" element={<ModelTelemetry />} />
+                <Route path="/admin/ai-command/command-input" element={<CommandInput />} />
+                <Route path="/admin/ai-command/telemetry" element={<ModelTelemetry />} />
                 
                 <Route path="/admin/user-directory/manage-records" element={<ManageRecords />} />
                 <Route path="/admin/user-directory/applications" element={<InternApplications />} />

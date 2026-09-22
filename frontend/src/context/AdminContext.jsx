@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import DummyApi from '../../API/DummyApi';
+import adminApi from '../lib/adminApi';
 
 const AdminContext = createContext();
 
@@ -51,7 +51,7 @@ export function AdminProvider({ children }) {
 
   useEffect(() => {
     let active = true;
-    DummyApi.getAdminData().then((data) => {
+    adminApi.getAdminData().then((data) => {
       if (!active) return;
       setAdminProfile(data.adminProfile);
       setProfileData(data.profileData);
@@ -72,6 +72,8 @@ export function AdminProvider({ children }) {
       setCommandHistory(data.commandHistory);
       setInferences(data.inferences);
       setAdminPermissions(data.adminPermissions);
+    }).catch((error) => {
+      console.error('Unable to load admin data:', error);
     });
     return () => { active = false; };
   }, []);
