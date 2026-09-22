@@ -2,11 +2,11 @@ import React, { useState, useRef, useEffect } from "react";
 import { useAdmin } from "../../context/AdminContext";
 
 export default function CommandInput() {
-  const { adminProfile } = useAdmin();
+  const { adminProfile, commandHistory: apiHistory } = useAdmin();
   const [input, setInput] = useState("");
-  const [history, setHistory] = useState([
-    { role: "system", text: "Alpha Engine v2.4 initialized. Natural Language Processor is online. How can I assist you today?" }
-  ]);
+  const [history, setHistory] = useState([]);
+
+  useEffect(() => setHistory(apiHistory), [apiHistory]);
   
   const endOfMessagesRef = useRef(null);
 
@@ -44,14 +44,14 @@ export default function CommandInput() {
   };
 
   return (
-    <div className="h-full w-full flex flex-col bg-[#07080a]">
+    <div className="h-full w-full flex flex-col bg-base">
       {/* Header */}
-      <div className="px-8 py-6 border-b border-gray-800/60 bg-[#0a0b10]/90 backdrop-blur-md z-10">
+      <div className="px-8 py-6 border-b border-divider/60 bg-surface/90 backdrop-blur-md z-10">
         <div className="flex items-center gap-4">
           <i className="ri-terminal-window-line text-3xl text-[#00e676]"></i>
           <div>
-            <h1 className="text-2xl font-semibold text-white mb-1">Command Input</h1>
-            <p className="text-gray-500 text-xs font-mono flex items-center gap-2">
+            <h1 className="text-2xl font-semibold text-primary mb-1">Command Input</h1>
+            <p className="text-secondary text-xs font-mono flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#00e676] animate-pulse"></span> 
               NLU Engine Connected
             </p>
@@ -92,7 +92,7 @@ export default function CommandInput() {
       </div>
 
       {/* Input Area */}
-      <div className="p-6 border-t border-gray-800/60 bg-[#0a0b10]">
+      <div className="p-6 border-t border-divider/60 bg-surface">
         <form onSubmit={handleSubmit} className="relative max-w-4xl mx-auto">
           <i className="ri-arrow-right-s-line absolute left-4 top-1/2 -translate-y-1/2 text-2xl text-[#00e676]"></i>
           <input 
@@ -100,7 +100,7 @@ export default function CommandInput() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Enter natural language command (e.g., 'Generate certificates for pending interns')..."
-            className="w-full bg-[#13151c] border border-gray-700 hover:border-gray-600 focus:border-[#00e676]/80 rounded-xl py-4 pl-12 pr-16 text-sm text-gray-200 focus:outline-none transition-colors shadow-inner"
+            className="w-full bg-surface-hover border border-gray-700 hover:border-gray-600 focus:border-[#00e676]/80 rounded-xl py-4 pl-12 pr-16 text-sm text-gray-200 focus:outline-none transition-colors shadow-inner"
             autoFocus
           />
           <button 

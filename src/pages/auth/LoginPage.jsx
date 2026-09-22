@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import AuthLayout from '../components/layout/AuthLayout';
-import SocialButton from '../components/auth/SocialButton';
-import LoginForm from '../components/auth/LoginForm';
-import { signInWithGoogle, signInWithApple } from '../lib/socialAuth';
+import AuthLayout from '../../components/layout/AuthLayout';
+import SocialButton from '../../components/auth/SocialButton';
+import LoginForm from '../../components/auth/LoginForm';
+import { signInWithGoogle, signInWithApple } from '../../lib/socialAuth';
 
 export default function LoginPage() {
   const [socialError, setSocialError] = useState('');
@@ -46,7 +46,7 @@ export default function LoginPage() {
       <div className="flex items-center gap-4 mb-8">
         <div className="flex-1 border-t border-gray-800"></div>
         <span className="text-gray-600 text-sm">Or</span>
-        <div className="flex-1 border-t border-gray-800"></div>
+        <div className="flex-1 border-t border-divider"></div>
       </div>
 
       <LoginForm />

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
@@ -7,9 +7,8 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   
-  const navigate = useNavigate();
+  const { login } = useAuth();
 
-  // Pull credentials securely from the .env file
   const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
   const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD;
 
@@ -17,9 +16,10 @@ export default function LoginForm() {
     e.preventDefault();
     setError('');
 
-    // Check input against environment variables
     if (email === adminEmail && password === adminPassword) {
-      navigate('/admin-dashboard'); 
+      // Simulate generating a secure JWT for the session
+      const mockSessionToken = btoa(email + Date.now().toString());
+      login(mockSessionToken, '/admin-dashboard'); 
     } else {
       setError('Invalid email or password.');
     }
@@ -27,14 +27,11 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-      
       {/* Email Field */}
       <div>
         <label className="block text-gray-300 text-sm mb-1.5" htmlFor="email">Email</label>
         <div className="relative flex items-center">
-          <svg className="w-5 h-5 text-gray-500 absolute left-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-          </svg>
+          <i className="ri-mail-line w-5 h-5 text-gray-500 absolute left-3 flex items-center justify-center"></i>
           <input 
             id="email"
             type="email" 
@@ -51,9 +48,7 @@ export default function LoginForm() {
       <div>
         <label className="block text-gray-300 text-sm mb-1.5" htmlFor="password">Password</label>
         <div className="relative flex items-center">
-          <svg className="w-5 h-5 text-gray-500 absolute left-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-          </svg>
+          <i className="ri-lock-line w-5 h-5 text-gray-500 absolute left-3 flex items-center justify-center"></i>
           <input 
             id="password"
             type={showPassword ? "text" : "password"} 
@@ -73,25 +68,20 @@ export default function LoginForm() {
         </div>
       </div>
 
-      {/* Error Message */}
-      {error && (
-        <p className="text-red-500 text-sm mt-[-10px]">{error}</p>
-      )}
+      {error && <p className="text-red-500 text-sm mt-[-10px]">{error}</p>}
 
-      {/* Checkbox */}
       <div className="flex items-center gap-3 mt-1">
         <input 
           id="terms"
           type="checkbox" 
           required
-          className="w-4 h-4 rounded border-gray-700 bg-transparent text-[#00e676] focus:ring-[#00e676]" 
+          className="w-4 h-4 rounded border-gray-700 bg-transparent accent-[#00e676] cursor-pointer" 
         />
         <label htmlFor="terms" className="text-gray-400 text-sm">
           I agree to the <a href="#" className="text-gray-300 hover:text-white transition-colors">Terms & Privacy</a>
         </label>
       </div>
 
-      {/* Submit Button */}
       <button 
         type="submit" 
         className="w-full bg-[#1b1c28] hover:bg-[#00e676] hover:text-black border border-gray-800 text-gray-200 rounded-lg py-3 mt-2 transition-all duration-300 font-medium">

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import logo from '../../assets/icons/alpha_logo.png';
 import { useAdmin } from "../../context/AdminContext";
+import ThemeToggle from '../ThemeToggle';
 
 export default function AdminLayout() {
   const [expandedMenu, setExpandedMenu] = useState("Dashboard");
@@ -19,7 +20,7 @@ export default function AdminLayout() {
       <div className="mb-1">
         <button
           onClick={() => setExpandedMenu(isExpanded ? "" : label)}
-          className={`w-full flex items-center justify-between px-4 py-3 text-sm transition-all duration-300 rounded-r-lg border-l-2 ${isActive ? "border-[#00e676] bg-white/[0.02] text-white" : "border-transparent text-gray-400 hover:text-gray-200 hover:bg-white/[0.02]"}`}
+          className={`w-full flex items-center justify-between px-4 py-3 text-sm transition-all duration-300 rounded-r-lg border-l-2 ${isActive ? "border-brand bg-surface-hover text-primary" : "border-transparent text-secondary hover:text-primary hover:bg-surface-hover"}`}
         >
           <div className="flex items-center gap-3">
             <i
@@ -29,7 +30,7 @@ export default function AdminLayout() {
           </div>
           {subItems && (
             <i
-              className={`ri-arrow-${isExpanded ? "down" : "right"}-s-line text-gray-500`}
+              className={`ri-arrow-${isExpanded ? "down" : "right"}-s-line text-secondary`}
             ></i>
           )}
         </button>
@@ -43,7 +44,7 @@ export default function AdminLayout() {
                 <button
                   key={idx}
                   onClick={() => navigate(item.path)}
-                  className={`w-full text-left pl-[3.25rem] py-2.5 text-xs tracking-wide transition-colors duration-200 border-l-2 ${isSubActive ? "border-[#00e676] text-white bg-white/[0.01]" : "border-transparent text-gray-500 hover:text-gray-300"}`}
+                  className={`w-full text-left pl-[3.25rem] py-2.5 text-xs tracking-wide transition-colors duration-200 border-l-2 ${isSubActive ? "border-brand text-primary bg-surface-hover" : "border-transparent text-secondary hover:text-primary"}`}
                 >
                   {item.label}
                 </button>
@@ -56,11 +57,11 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="flex h-screen bg-[#07080a] text-white font-sans overflow-hidden selection:bg-[#00e676]/30">
+    <div className="flex h-screen bg-base text-primary font-sans overflow-hidden selection:bg-brand/30">
       {/* Sidebar */}
-      <aside className="w-64 border-r border-gray-800/60 bg-[#0a0b10] flex flex-col h-full z-20">
+      <aside className="w-64 border-r border-divider/60 bg-surface flex flex-col h-full z-20">
         {/* Brand Header */}
-        <div className="h-20 flex items-center px-6 border-b border-gray-800/60">
+        <div className="h-20 flex items-center px-6 border-b border-divider/60">
           <img src= {logo} alt="Alpha logo" className="w-17 h-17 object-contain" />
           <span className="font-bold tracking-widest text-sm uppercase">
             Alpha
@@ -70,11 +71,11 @@ export default function AdminLayout() {
         {/* Search */}
         <div className="px-4 py-5">
           <div className="relative">
-            <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
+            <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-secondary"></i>
             <input
               type="text"
               placeholder="Search for..."
-              className="w-full bg-[#13151c] border border-gray-800/80 rounded-md py-2 pl-9 pr-4 text-xs text-gray-300 focus:outline-none focus:border-[#00e676]/50 transition-colors"
+              className="w-full bg-surface-hover border border-divider rounded-md py-2 pl-9 pr-4 text-xs text-primary focus:outline-none focus:border-brand/50 transition-colors"
             />
           </div>
         </div>
@@ -119,7 +120,7 @@ export default function AdminLayout() {
             ]}
           />
 
-          <div className="my-4 border-t border-gray-800/60 mx-4"></div>
+          <div className="my-4 border-t border-divider/60 mx-4"></div>
 
           <NavItem
             icon="ri-settings-3-line"
@@ -152,21 +153,38 @@ export default function AdminLayout() {
           />
         </nav>
 
-        {/* User Footer - Now Clickable & Dynamic */}
-        <div 
-          onClick={() => navigate('/admin/settings/profile-settings')}
-          className="p-4 border-t border-gray-800/60 flex items-center gap-3 hover:bg-white/[0.02] cursor-pointer transition-colors"
-        >
-          <img src={adminProfile.avatar} alt="Admin" className="w-9 h-9 rounded-full border border-gray-700 object-cover" />
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold">{adminProfile.name}</span>
-            <span className="text-[10px] text-gray-500">Account settings</span>
+        {/* Sidebar Footer */}
+        <div className="p-4 border-t border-divider flex items-center justify-between bg-surface mt-auto shrink-0">
+          
+          {/* Profile Section (Truncates gracefully) */}
+          <div className="flex items-center gap-3 overflow-hidden pr-2">
+            <img 
+              src={adminProfile.avatar} 
+              alt="Admin" 
+              className="w-9 h-9 rounded-full object-cover border border-divider shrink-0" 
+            />
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-medium text-primary truncate">{adminProfile.name}</h4>
+              <p className="text-xs text-secondary truncate">Super Admin</p>
+            </div>
           </div>
+          
+          {/* Action Icons Section */}
+          <div className="flex items-center gap-1 shrink-0">
+            <ThemeToggle iconOnly={true} />
+            <Link 
+              to="/admin/settings/profile-settings" 
+              className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-surface-hover text-secondary hover:text-brand transition-colors"
+            >
+              <i className="ri-settings-3-line text-lg"></i>
+            </Link>
+          </div>
+
         </div>
       </aside>
 
       {/* Main Content Area - Outlet handles the dynamic page swapping */}
-      <main className="flex-1 relative bg-[#07080a] overflow-hidden">
+      <main className="flex-1 relative bg-base overflow-hidden">
         <Outlet />
       </main>
     </div>

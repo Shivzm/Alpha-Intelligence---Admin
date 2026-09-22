@@ -1,42 +1,103 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import DummyApi from '../../API/DummyApi';
 
 const AdminContext = createContext();
 
 export function AdminProvider({ children }) {
-  // 1. Existing State
-  const [adminProfile, setAdminProfile] = useState({
-    name: 'Admin User',
-    avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+  // Check sessionStorage; defaults to 'dark' on a fresh tab
+  const [theme, setTheme] = useState(() => {
+    return sessionStorage.getItem('alpha_theme') || 'dark';
   });
 
-  const [applications, setApplications] = useState([]);
-  const [records, setRecords] = useState([]);
-
-  // 2. NEW: Theme State (Defaults to dark)
-  const [theme, setTheme] = useState('dark');
-
-  // 3. NEW: Theme Effect - injects 'dark' class into the HTML root
+  // Inject the class and save to the current session
   useEffect(() => {
     const root = window.document.documentElement;
     if (theme === 'dark') {
       root.classList.add('dark');
-      root.classList.remove('light');
     } else {
       root.classList.remove('dark');
-      root.classList.add('light');
     }
+    sessionStorage.setItem('alpha_theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === 'dark' ? 'light' : 'dark'));
   };
+  
+  const [adminProfile, setAdminProfile] = useState({ name: '', avatar: '' });
+  const [profileData, setProfileData] = useState({ firstName: '', lastName: '' });
+  const [applications, setApplications] = useState([]);
+  const [records, setRecords] = useState([]);
+  const [dashboardStats, setDashboardStats] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const [documents, setDocuments] = useState([]);
+  const [certificateTemplates, setCertificateTemplates] = useState([]);
+  const [idCardTemplates, setIdCardTemplates] = useState([]);
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [backups, setBackups] = useState([]);
+  const [alerts, setAlerts] = useState([]);
+  const [alertChannels, setAlertChannels] = useState({});
+  const [intents, setIntents] = useState([]);
+  const [databaseConfig, setDatabaseConfig] = useState({});
+  const [commandHistory, setCommandHistory] = useState([]);
+  const [inferences, setInferences] = useState([]);
+  const [adminPermissions, setAdminPermissions] = useState({
+    vault: {},
+    directory: {},
+    aiCenter: {},
+    logs: {},
+  });
+
+  useEffect(() => {
+    let active = true;
+    DummyApi.getAdminData().then((data) => {
+      if (!active) return;
+      setAdminProfile(data.adminProfile);
+      setProfileData(data.profileData);
+      setApplications(data.applications);
+      setRecords(data.records);
+      setDashboardStats(data.dashboardStats);
+      setRecentActivity(data.recentActivity);
+      setTasks(data.tasks);
+      setDocuments(data.documents);
+      setCertificateTemplates(data.certificateTemplates);
+      setIdCardTemplates(data.idCardTemplates);
+      setAuditLogs(data.auditLogs);
+      setBackups(data.backups);
+      setAlerts(data.alerts);
+      setAlertChannels(data.alertChannels);
+      setIntents(data.intents);
+      setDatabaseConfig(data.databaseConfig);
+      setCommandHistory(data.commandHistory);
+      setInferences(data.inferences);
+      setAdminPermissions(data.adminPermissions);
+    });
+    return () => { active = false; };
+  }, []);
 
   return (
     <AdminContext.Provider value={{ 
+      theme, toggleTheme,
       adminProfile, setAdminProfile,
+      profileData, setProfileData,
       applications, setApplications,
       records, setRecords,
-      theme, toggleTheme // Export the theme controls
+      dashboardStats,
+      recentActivity,
+      tasks, setTasks,
+      documents, setDocuments,
+      certificateTemplates,
+      idCardTemplates,
+      auditLogs,
+      backups, setBackups,
+      alerts, setAlerts,
+      alertChannels, setAlertChannels,
+      intents, setIntents,
+      databaseConfig, setDatabaseConfig
+      ,commandHistory, setCommandHistory,
+      inferences, setInferences,
+      adminPermissions, setAdminPermissions
     }}>
       {children}
     </AdminContext.Provider>

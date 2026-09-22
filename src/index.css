@@ -13,52 +13,53 @@
 }
 
 @theme {
-  --font-sans: 'Montserrat', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Montserrat', system-ui, sans-serif;
   --font-display: 'Orbitron', system-ui, sans-serif;
 
-  /* 
-    1. MAP VARIABLES TO TAILWIND COLORS 
-    This tells Tailwind to create classes like `bg-surface`, `text-primary`, etc.
-  */
-  --color-base: var(--theme-base);
-  --color-surface: var(--theme-surface);
-  --color-input: var(--theme-input);
-  --color-primary: var(--theme-primary);
-  --color-muted: var(--theme-muted);
-  --color-divider: var(--theme-divider);
-  --color-brand: var(--theme-brand);
+  --color-base: var(--bg-base);
+  --color-surface: var(--bg-surface);
+  --color-surface-hover: var(--bg-surface-hover);
+  --color-primary: var(--text-primary);
+  --color-secondary: var(--text-secondary);
+  --color-divider: var(--border-color);
+  --color-card-border: var(--card-border);
+  --color-brand: var(--brand-primary);
+  --color-brand-hover: var(--brand-hover);
 }
 
 @layer base {
-  /* 2. LIGHT MODE COLORS (Default) */
+  /* LIGHT MODE (Upgraded: Professional & Creative SaaS aesthetic) */
   :root {
-    --theme-base: #f9fafb;     /* Very light gray for the main app background */
-    --theme-surface: #ffffff;  /* Pure white for cards/panels */
-    --theme-input: #f3f4f6;    /* Light gray for input fields */
-    --theme-primary: #111827;  /* Near black for headings */
-    --theme-muted: #6b7280;    /* Gray for descriptions */
-    --theme-divider: #e5e7eb;  /* Light border */
-    --theme-brand: #00c868;    /* Darker green for light mode contrast */
+    --bg-base: #f1f5f9;          /* Slate 100: Modern soft background */
+    --bg-surface: #ffffff;       /* Pure White: Crisp cards */
+    --bg-surface-hover: #e2e8f0; /* Slate 200: Tactile hover states */
+    --text-primary: #0f172a;     /* Slate 900: Deep professional text */
+    --text-secondary: #64748b;   /* Slate 500: Muted support text */
+    --border-color: #cbd5e1;     /* Slate 300: Clean structured dividers */
+    --card-border: #b8c7dc;      /* Slightly stronger card edge for light mode */
+    --brand-primary: #10b981;    /* Emerald 500: Professional, creative accent */
+    --brand-hover: #059669;      /* Emerald 600 */
   }
 
-  /* 3. DARK MODE COLORS */
+  /* DARK MODE (Original & Untouched) */
   .dark {
-    --theme-base: #07080a;     /* Deep black for main app background */
-    --theme-surface: #0c0d12;  /* Slightly lighter black for cards/panels */
-    --theme-input: #13151c;    /* Inner backgrounds for inputs */
-    --theme-primary: #ffffff;  /* Pure white for headings */
-    --theme-muted: #9ca3af;    /* Gray for descriptions */
-    --theme-divider: #1f2937;  /* Dark gray border */
-    --theme-brand: #00e676;    /* Bright neon green */
+    --bg-base: #07080a;
+    --bg-surface: #0c0d12;
+    --bg-surface-hover: #13151c;
+    --text-primary: #ffffff;
+    --text-secondary: #9ca3af;
+    --border-color: #1f2937;
+    --card-border: #1f2937;
+    --brand-primary: #00e676;
+    --brand-hover: #00c868;
   }
 
-  /* 4. AUTO-APPLY GLOBALS */
   body {
-    background-color: var(--theme-base);
-    color: var(--theme-primary);
-    transition-property: color, background-color, border-color, fill, stroke;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 300ms;
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+    margin: 0;
+    min-height: 100vh;
   }
 }
 
@@ -66,12 +67,98 @@
   box-sizing: border-box;
 }
 
-html,
-body,
-#root {
-  min-height: 100%;
+/* Keep legacy page utilities readable in light mode without changing dark mode. */
+:root:not(.dark) [class~="bg-gray-800"],
+:root:not(.dark) [class~="bg-gray-800/50"],
+:root:not(.dark) [class~="bg-gray-800/80"],
+:root:not(.dark) [class~="bg-gray-700"],
+:root:not(.dark) [class~="bg-[#1a1c26]"],
+:root:not(.dark) [class~="bg-[#15161c]"],
+:root:not(.dark) [class~="bg-[#1b1c28]"] {
+  background-color: var(--bg-surface-hover) !important;
 }
 
-body {
-  margin: 0;
+:root:not(.dark) [class~="bg-black/20"] {
+  background-color: rgb(255 255 255 / 0.72) !important;
+}
+
+:root:not(.dark) [class~="bg-white/10"] {
+  background-color: rgb(15 23 42 / 0.06) !important;
+}
+
+:root:not(.dark) [class~="bg-white/[0.02]"],
+:root:not(.dark) [class~="bg-white/[0.01]"] {
+  background-color: rgb(15 23 42 / 0.035) !important;
+}
+
+:root:not(.dark) [class~="text-gray-200"],
+:root:not(.dark) [class~="text-gray-300"] {
+  color: var(--text-primary) !important;
+}
+
+:root:not(.dark) [class~="text-gray-400"],
+:root:not(.dark) [class~="text-gray-500"],
+:root:not(.dark) [class~="text-gray-600"] {
+  color: var(--text-secondary) !important;
+}
+
+:root:not(.dark) [class~="border-gray-700"],
+:root:not(.dark) [class~="border-gray-700/50"],
+:root:not(.dark) [class~="border-gray-800"],
+:root:not(.dark) [class~="border-gray-800/50"],
+:root:not(.dark) [class~="border-gray-800/60"] {
+  border-color: var(--border-color) !important;
+}
+
+:root:not(.dark) [class~="bg-[#00e676]"],
+:root:not(.dark) [class~="accent-[#00e676]"] {
+  background-color: var(--brand-primary) !important;
+  accent-color: var(--brand-primary) !important;
+}
+
+:root:not(.dark) [class~="text-[#00e676]"] {
+  color: var(--brand-primary) !important;
+}
+
+:root:not(.dark) [class~="border-[#00e676]/20"],
+:root:not(.dark) [class~="border-[#00e676]/50"] {
+  border-color: color-mix(in srgb, var(--brand-primary) 35%, transparent) !important;
+}
+
+:root:not(.dark) [class~="bg-[#00e676]/5"],
+:root:not(.dark) [class~="bg-[#00e676]/10"] {
+  background-color: color-mix(in srgb, var(--brand-primary) 10%, transparent) !important;
+}
+
+:root:not(.dark) [class~="hover:bg-[#00e676]"]:hover {
+  background-color: var(--brand-hover) !important;
+}
+
+:root:not(.dark) [class~="hover:bg-[#252836]"]:hover,
+:root:not(.dark) [class~="hover:bg-gray-800"]:hover {
+  background-color: var(--bg-surface-hover) !important;
+}
+
+:root:not(.dark) [class~="hover:text-[#00e676]"]:hover {
+  color: var(--brand-hover) !important;
+}
+
+:root:not(.dark) [class~="hover:border-[#00e676]/50"]:hover,
+:root:not(.dark) [class~="hover:border-gray-600"]:hover,
+:root:not(.dark) [class~="hover:border-gray-700"]:hover {
+  border-color: var(--brand-primary) !important;
+}
+
+:root:not(.dark) [class~="bg-gray-700"] {
+  background-color: #cbd5e1 !important;
+}
+
+:root:not(.dark) [class~="hover:bg-gray-700"]:hover {
+  background-color: #b8c7dc !important;
+}
+
+:root:not(.dark) [class~="bg-red-500/10"],
+:root:not(.dark) [class~="bg-emerald-500/10"],
+:root:not(.dark) [class~="bg-yellow-500/10"] {
+  background-color: color-mix(in srgb, currentColor 10%, transparent) !important;
 }

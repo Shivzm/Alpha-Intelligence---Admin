@@ -1,12 +1,13 @@
 import React, { useState } from "react";
+import { useAdmin } from "../../context/AdminContext";
 
 export default function DocumentVault() {
-  const [documents, setDocuments] = useState([
-    { id: "DOC-9921", name: "Alex Chen", type: "ID Card", date: "2026-09-22" },
-    { id: "DOC-9922", name: "Sarah Jenkins", type: "Certificate", date: "2026-09-21" },
-    { id: "DOC-9923", name: "Marcus Rossi", type: "ID Card", date: "2026-09-20" },
-    { id: "DOC-9924", name: "Priya Patel", type: "Certificate", date: "2026-09-19" },
-  ]);
+  const { documents: apiDocuments } = useAdmin();
+  const [documents, setDocuments] = useState([]);
+
+  React.useEffect(() => {
+    setDocuments(apiDocuments);
+  }, [apiDocuments]);
 
   const [selected, setSelected] = useState([]);
 
@@ -32,16 +33,16 @@ export default function DocumentVault() {
     <div className="h-full w-full p-8 overflow-y-auto">
       {/* Header */}
       <div className="flex items-center gap-4 mb-2">
-        <i className="ri-folder-2-line text-4xl text-gray-400"></i>
+        <i className="ri-folder-2-line text-4xl text-secondary"></i>
         <h1 className="text-3xl font-semibold">Document Vault</h1>
       </div>
-      <p className="text-gray-500 text-sm mb-8">View, verify, and export generated credentials.</p>
+      <p className="text-secondary text-sm mb-8">View, verify, and export generated credentials.</p>
 
       {/* Toolbar */}
       <div className="flex justify-between items-center mb-6 h-10">
         <div className="relative w-80">
-          <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
-          <input type="text" placeholder="Search..." className="w-full bg-transparent border border-gray-800 rounded-lg py-2 pl-9 pr-4 text-sm focus:outline-none focus:border-[#00e676] transition-colors" />
+          <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-secondary"></i>
+          <input type="text" placeholder="Search..." className="w-full bg-transparent border border-divider rounded-lg py-2 pl-9 pr-4 text-sm focus:outline-none focus:border-[#00e676] transition-colors" />
         </div>
         
         {/* Conditional Bulk Actions */}
@@ -66,10 +67,10 @@ export default function DocumentVault() {
       </div>
 
       {/* Data Table */}
-      <div className="border border-gray-800/80 rounded-xl overflow-hidden bg-[#0c0d12]">
+      <div className="border border-divider rounded-xl overflow-hidden bg-surface">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-gray-800 text-xs text-gray-500 uppercase tracking-wider bg-white/[0.01]">
+            <tr className="border-b border-divider text-xs text-secondary uppercase tracking-wider bg-white/[0.01]">
               <th className="px-6 py-4 w-12">
                 <input 
                   type="checkbox" 
@@ -86,7 +87,7 @@ export default function DocumentVault() {
           </thead>
           <tbody className="text-sm text-gray-300">
             {documents.map((row) => (
-              <tr key={row.id} className={`border-b border-gray-800/50 transition-colors ${selected.includes(row.id) ? 'bg-[#00e676]/5' : 'hover:bg-white/[0.02]'}`}>
+              <tr key={row.id} className={`border-b border-divider/50 transition-colors ${selected.includes(row.id) ? 'bg-[#00e676]/5' : 'hover:bg-white/[0.02]'}`}>
                 <td className="px-6 py-4">
                   <input 
                     type="checkbox" 
@@ -95,8 +96,8 @@ export default function DocumentVault() {
                     className="accent-[#00e676] cursor-pointer w-4 h-4 rounded border-gray-700" 
                   />
                 </td>
-                <td className="px-6 py-4 font-mono text-xs text-gray-400">{row.id}</td>
-                <td className="px-6 py-4 font-medium text-white">{row.name}</td>
+                <td className="px-6 py-4 font-mono text-xs text-secondary">{row.id}</td>
+                <td className="px-6 py-4 font-medium text-primary">{row.name}</td>
                 
                 {/* The re-added icons for document types */}
                 <td className="px-6 py-4 flex items-center gap-2">
@@ -104,7 +105,7 @@ export default function DocumentVault() {
                   {row.type}
                 </td>
                 
-                <td className="px-6 py-4 text-gray-400">{row.date}</td>
+                <td className="px-6 py-4 text-secondary">{row.date}</td>
               </tr>
             ))}
           </tbody>

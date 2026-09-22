@@ -1,21 +1,11 @@
 import React, { useState } from "react";
+import { useAdmin } from "../../context/AdminContext";
 
 export default function SystemAlerts() {
-  const [channels, setChannels] = useState({
-    email: true,
-    sms: false,
-    dashboard: true,
-  });
-
-  const [alerts, setAlerts] = useState([
-    { id: 1, name: "Failed Login Attempts", desc: "Triggered after 3 consecutive failed logins.", active: true, severity: "High" },
-    { id: 2, name: "AI Engine Latency Spike", desc: "Response time exceeds 2000ms for 5 minutes.", active: false, severity: "Medium" },
-    { id: 3, name: "Mass Document Export", desc: "More than 50 documents exported at once.", active: true, severity: "High" },
-    { id: 4, name: "New Admin Provisioned", desc: "A new administrator account is created.", active: true, severity: "Low" },
-  ]);
+  const { alertChannels: channels, setAlertChannels, alerts, setAlerts } = useAdmin();
 
   const toggleChannel = (channel) => {
-    setChannels({ ...channels, [channel]: !channels[channel] });
+    setAlertChannels({ ...channels, [channel]: !channels[channel] });
   };
 
   const toggleAlert = (id) => {
@@ -25,10 +15,10 @@ export default function SystemAlerts() {
   return (
     <div className="h-full w-full p-8 overflow-y-auto">
       <div className="flex items-center gap-4 mb-2">
-        <i className="ri-alarm-warning-line text-4xl text-gray-400"></i>
+        <i className="ri-alarm-warning-line text-4xl text-secondary"></i>
         <h1 className="text-3xl font-semibold">System Alerts</h1>
       </div>
-      <p className="text-gray-500 text-sm mb-8">
+      <p className="text-secondary text-sm mb-8">
         Configure automated security notifications and delivery channels.
       </p>
 
@@ -36,17 +26,17 @@ export default function SystemAlerts() {
         
         {/* Left Column: Delivery Channels */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-[#0c0d12] border border-gray-800/80 rounded-xl p-6">
-            <h2 className="text-lg font-medium text-white mb-6 border-b border-gray-800 pb-2">Delivery Channels</h2>
+          <div className="bg-surface border border-divider rounded-xl p-6">
+            <h2 className="text-lg font-medium text-primary mb-6 border-b border-divider pb-2">Delivery Channels</h2>
             
             <div className="space-y-6">
               {/* Channel Toggle Item */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <i className="ri-mail-send-line text-xl text-gray-400"></i>
+                  <i className="ri-mail-send-line text-xl text-secondary"></i>
                   <div>
                     <h4 className="text-sm text-gray-200 font-medium">Email Notifications</h4>
-                    <p className="text-xs text-gray-500">admin@alpha.com</p>
+                    <p className="text-xs text-secondary">admin@alpha.com</p>
                   </div>
                 </div>
                 <div className={`w-10 h-5 rounded-full transition-colors relative cursor-pointer ${channels.email ? 'bg-[#00e676]' : 'bg-gray-700'}`} onClick={() => toggleChannel('email')}>
@@ -56,10 +46,10 @@ export default function SystemAlerts() {
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <i className="ri-smartphone-line text-xl text-gray-400"></i>
+                  <i className="ri-smartphone-line text-xl text-secondary"></i>
                   <div>
                     <h4 className="text-sm text-gray-200 font-medium">SMS Alerts</h4>
-                    <p className="text-xs text-gray-500">+1 (555) 019-2041</p>
+                    <p className="text-xs text-secondary">+1 (555) 019-2041</p>
                   </div>
                 </div>
                 <div className={`w-10 h-5 rounded-full transition-colors relative cursor-pointer ${channels.sms ? 'bg-[#00e676]' : 'bg-gray-700'}`} onClick={() => toggleChannel('sms')}>
@@ -69,10 +59,10 @@ export default function SystemAlerts() {
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <i className="ri-notification-3-line text-xl text-gray-400"></i>
+                  <i className="ri-notification-3-line text-xl text-secondary"></i>
                   <div>
                     <h4 className="text-sm text-gray-200 font-medium">Dashboard Toasts</h4>
-                    <p className="text-xs text-gray-500">In-app push notifications</p>
+                    <p className="text-xs text-secondary">In-app push notifications</p>
                   </div>
                 </div>
                 <div className={`w-10 h-5 rounded-full transition-colors relative cursor-pointer ${channels.dashboard ? 'bg-[#00e676]' : 'bg-gray-700'}`} onClick={() => toggleChannel('dashboard')}>
@@ -85,12 +75,12 @@ export default function SystemAlerts() {
 
         {/* Right Column: Alert Triggers */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-[#0c0d12] border border-gray-800/80 rounded-xl p-6">
-            <h2 className="text-lg font-medium text-white mb-6 border-b border-gray-800 pb-2">Event Triggers</h2>
+          <div className="bg-surface border border-divider rounded-xl p-6">
+            <h2 className="text-lg font-medium text-primary mb-6 border-b border-divider pb-2">Event Triggers</h2>
             
             <div className="space-y-4">
               {alerts.map((alert) => (
-                <div key={alert.id} className="bg-[#13151c] border border-gray-800/50 p-4 rounded-lg flex items-center justify-between hover:border-gray-700 transition-colors">
+                <div key={alert.id} className="bg-surface-hover border border-divider/50 p-4 rounded-lg flex items-center justify-between hover:border-gray-700 transition-colors">
                   <div>
                     <div className="flex items-center gap-3 mb-1">
                       <h4 className="text-sm font-medium text-gray-200">{alert.name}</h4>
@@ -102,7 +92,7 @@ export default function SystemAlerts() {
                         {alert.severity}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-500">{alert.desc}</p>
+                    <p className="text-xs text-secondary">{alert.desc}</p>
                   </div>
                   
                   <div className={`w-10 h-5 rounded-full transition-colors relative cursor-pointer ${alert.active ? 'bg-[#00e676]' : 'bg-gray-700'}`} onClick={() => toggleAlert(alert.id)}>

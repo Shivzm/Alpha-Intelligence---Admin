@@ -1,14 +1,11 @@
 import React, { useState } from "react";
+import { useAdmin } from "../../context/AdminContext";
 
 export default function DatabaseConfig() {
-  const [config, setConfig] = useState({
-    host: "aws-rds-cluster-alpha.us-east-1.rds.amazonaws.com",
-    port: "3306",
-    dbName: "alpha_production_db",
-    username: "admin_master",
-    password: "••••••••••••••••",
-    ssl: true
-  });
+  const { databaseConfig: apiConfig, setDatabaseConfig } = useAdmin();
+  const [config, setConfig] = useState({});
+
+  React.useEffect(() => setConfig(apiConfig), [apiConfig]);
 
   const [showPassword, setShowPassword] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
@@ -27,6 +24,7 @@ export default function DatabaseConfig() {
   };
 
   const handleSave = () => {
+    setDatabaseConfig(config);
     alert("Database configuration updated successfully. A server restart may be required.");
   };
 
@@ -34,10 +32,10 @@ export default function DatabaseConfig() {
     <div className="h-full w-full p-8 overflow-y-auto">
       {/* Header */}
       <div className="flex items-center gap-4 mb-2">
-        <i className="ri-database-2-line text-4xl text-gray-400"></i>
+        <i className="ri-database-2-line text-4xl text-secondary"></i>
         <h1 className="text-3xl font-semibold">Database Configuration</h1>
       </div>
-      <p className="text-gray-500 text-sm mb-8">
+      <p className="text-secondary text-sm mb-8">
         Manage your primary data cluster settings and monitor live connection health.
       </p>
 
@@ -45,14 +43,14 @@ export default function DatabaseConfig() {
         
         {/* Left Column: Live Health Monitor */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-[#0c0d12] border border-gray-800/80 rounded-xl p-6 relative overflow-hidden">
+          <div className="bg-surface border border-divider rounded-xl p-6 relative overflow-hidden">
             {/* Background Glow */}
             <div className={`absolute -top-10 -right-10 w-32 h-32 rounded-full blur-3xl opacity-10 ${status === 'Connected' ? 'bg-[#00e676]' : 'bg-yellow-500'}`}></div>
             
-            <h2 className="text-lg font-medium text-white mb-6 border-b border-gray-800 pb-2">Connection Health</h2>
+            <h2 className="text-lg font-medium text-primary mb-6 border-b border-divider pb-2">Connection Health</h2>
             
             <div className="flex items-center justify-between mb-6">
-              <span className="text-sm text-gray-400">Status</span>
+              <span className="text-sm text-secondary">Status</span>
               <div className="flex items-center gap-2">
                 {isTesting ? (
                   <i className="ri-loader-4-line animate-spin text-yellow-500"></i>
@@ -66,17 +64,17 @@ export default function DatabaseConfig() {
             </div>
 
             <div className="space-y-4">
-              <div className="bg-[#13151c] p-3 rounded-lg border border-gray-800/50 flex justify-between items-center">
-                <span className="text-xs text-gray-500 uppercase tracking-wider">Ping</span>
-                <span className="text-sm text-white font-mono">42ms</span>
+              <div className="bg-surface-hover p-3 rounded-lg border border-divider/50 flex justify-between items-center">
+                <span className="text-xs text-secondary uppercase tracking-wider">Ping</span>
+                <span className="text-sm text-primary font-mono">42ms</span>
               </div>
-              <div className="bg-[#13151c] p-3 rounded-lg border border-gray-800/50 flex justify-between items-center">
-                <span className="text-xs text-gray-500 uppercase tracking-wider">Active Queries</span>
-                <span className="text-sm text-white font-mono">14</span>
+              <div className="bg-surface-hover p-3 rounded-lg border border-divider/50 flex justify-between items-center">
+                <span className="text-xs text-secondary uppercase tracking-wider">Active Queries</span>
+                <span className="text-sm text-primary font-mono">14</span>
               </div>
-              <div className="bg-[#13151c] p-3 rounded-lg border border-gray-800/50 flex justify-between items-center">
-                <span className="text-xs text-gray-500 uppercase tracking-wider">Uptime</span>
-                <span className="text-sm text-white font-mono">99.98%</span>
+              <div className="bg-surface-hover p-3 rounded-lg border border-divider/50 flex justify-between items-center">
+                <span className="text-xs text-secondary uppercase tracking-wider">Uptime</span>
+                <span className="text-sm text-primary font-mono">99.98%</span>
               </div>
             </div>
 
@@ -92,66 +90,66 @@ export default function DatabaseConfig() {
 
         {/* Right Column: Connection Credentials */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-[#0c0d12] border border-gray-800/80 rounded-xl p-6">
-            <h2 className="text-lg font-medium text-white mb-6 border-b border-gray-800 pb-2">Environment Variables</h2>
+          <div className="bg-surface border border-divider rounded-xl p-6">
+            <h2 className="text-lg font-medium text-primary mb-6 border-b border-divider pb-2">Environment Variables</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Host */}
               <div className="md:col-span-2">
-                <label className="block text-gray-400 text-xs uppercase tracking-wider mb-2">Endpoint / Host URL</label>
+                <label className="block text-secondary text-xs uppercase tracking-wider mb-2">Endpoint / Host URL</label>
                 <div className="relative">
-                  <i className="ri-server-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                  <i className="ri-server-line absolute left-3 top-1/2 -translate-y-1/2 text-secondary"></i>
                   <input 
                     type="text" 
                     value={config.host}
                     onChange={(e) => setConfig({...config, host: e.target.value})}
-                    className="w-full bg-[#13151c] border border-gray-800 rounded-lg py-2.5 pl-10 pr-4 text-sm text-gray-200 focus:outline-none focus:border-[#00e676]/50 transition-colors font-mono"
+                    className="w-full bg-surface-hover border border-divider rounded-lg py-2.5 pl-10 pr-4 text-sm text-gray-200 focus:outline-none focus:border-[#00e676]/50 transition-colors font-mono"
                   />
                 </div>
               </div>
 
               {/* Port & DB Name */}
               <div>
-                <label className="block text-gray-400 text-xs uppercase tracking-wider mb-2">Port</label>
+                <label className="block text-secondary text-xs uppercase tracking-wider mb-2">Port</label>
                 <input 
                   type="text" 
                   value={config.port}
                   onChange={(e) => setConfig({...config, port: e.target.value})}
-                  className="w-full bg-[#13151c] border border-gray-800 rounded-lg py-2.5 px-4 text-sm text-gray-200 focus:outline-none focus:border-[#00e676]/50 transition-colors font-mono"
+                  className="w-full bg-surface-hover border border-divider rounded-lg py-2.5 px-4 text-sm text-gray-200 focus:outline-none focus:border-[#00e676]/50 transition-colors font-mono"
                 />
               </div>
               <div>
-                <label className="block text-gray-400 text-xs uppercase tracking-wider mb-2">Database Name</label>
+                <label className="block text-secondary text-xs uppercase tracking-wider mb-2">Database Name</label>
                 <input 
                   type="text" 
                   value={config.dbName}
                   onChange={(e) => setConfig({...config, dbName: e.target.value})}
-                  className="w-full bg-[#13151c] border border-gray-800 rounded-lg py-2.5 px-4 text-sm text-gray-200 focus:outline-none focus:border-[#00e676]/50 transition-colors font-mono"
+                  className="w-full bg-surface-hover border border-divider rounded-lg py-2.5 px-4 text-sm text-gray-200 focus:outline-none focus:border-[#00e676]/50 transition-colors font-mono"
                 />
               </div>
 
               {/* Username & Password */}
               <div>
-                <label className="block text-gray-400 text-xs uppercase tracking-wider mb-2">Master Username</label>
+                <label className="block text-secondary text-xs uppercase tracking-wider mb-2">Master Username</label>
                 <input 
                   type="text" 
                   value={config.username}
                   onChange={(e) => setConfig({...config, username: e.target.value})}
-                  className="w-full bg-[#13151c] border border-gray-800 rounded-lg py-2.5 px-4 text-sm text-gray-200 focus:outline-none focus:border-[#00e676]/50 transition-colors font-mono"
+                  className="w-full bg-surface-hover border border-divider rounded-lg py-2.5 px-4 text-sm text-gray-200 focus:outline-none focus:border-[#00e676]/50 transition-colors font-mono"
                 />
               </div>
               <div>
-                <label className="block text-gray-400 text-xs uppercase tracking-wider mb-2">Master Password</label>
+                <label className="block text-secondary text-xs uppercase tracking-wider mb-2">Master Password</label>
                 <div className="relative">
                   <input 
                     type={showPassword ? "text" : "password"} 
                     value={config.password}
                     onChange={(e) => setConfig({...config, password: e.target.value})}
-                    className="w-full bg-[#13151c] border border-gray-800 rounded-lg py-2.5 px-4 pr-10 text-sm text-gray-200 focus:outline-none focus:border-[#00e676]/50 transition-colors font-mono"
+                    className="w-full bg-surface-hover border border-divider rounded-lg py-2.5 px-4 pr-10 text-sm text-gray-200 focus:outline-none focus:border-[#00e676]/50 transition-colors font-mono"
                   />
                   <button 
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary hover:text-gray-300"
                   >
                     <i className={showPassword ? "ri-eye-off-line" : "ri-eye-line"}></i>
                   </button>
@@ -171,8 +169,8 @@ export default function DatabaseConfig() {
             </div>
 
             {/* Action Buttons */}
-            <div className="mt-8 flex justify-end gap-4 border-t border-gray-800 pt-6">
-              <button className="bg-transparent border border-gray-700 text-gray-300 hover:text-white px-6 py-2 rounded-lg text-sm transition-colors">
+            <div className="mt-8 flex justify-end gap-4 border-t border-divider pt-6">
+              <button className="bg-transparent border border-gray-700 text-gray-300 hover:text-primary px-6 py-2 rounded-lg text-sm transition-colors">
                 Revert
               </button>
               <button 
