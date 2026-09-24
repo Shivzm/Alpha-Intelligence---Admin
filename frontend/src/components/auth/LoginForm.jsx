@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import adminApi from '../../lib/adminApi';
@@ -10,24 +10,12 @@ export default function LoginForm() {
   const [error, setError] = useState('');
   
   const { login } = useAuth();
-  const apiUrl = import.meta.env.VITE_API_URL;
-  const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     try {
-      if (!apiUrl && useMockData) {
-        const demoEmail = import.meta.env.VITE_DEMO_EMAIL || import.meta.env.VITE_ADMIN_EMAIL;
-        const demoPassword = import.meta.env.VITE_DEMO_PASSWORD || import.meta.env.VITE_ADMIN_PASSWORD;
-        if (email !== demoEmail || password !== demoPassword) {
-          throw new Error('Invalid demo credentials.');
-        }
-        login('demo-session', '/admin-dashboard');
-        return;
-      }
-
       const result = await adminApi.login(email, password);
       if (!result?.token) {
         throw new Error('The login response did not include a token.');

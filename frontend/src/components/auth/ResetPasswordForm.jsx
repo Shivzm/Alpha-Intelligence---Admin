@@ -1,15 +1,22 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import adminApi from '../../lib/adminApi';
 
 export default function ResetPasswordForm() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Wire this up to your actual "send reset link" API call.
-    console.log('Password reset requested for', email);
-    setSubmitted(true);
+    setError('');
+
+    try {
+      await adminApi.requestPasswordReset(email);
+      setSubmitted(true);
+    } catch (requestError) {
+      setError(requestError.message || 'Unable to request a password reset.');
+    }
   };
 
   if (submitted) {
@@ -52,6 +59,8 @@ export default function ResetPasswordForm() {
           />
         </div>
       </div>
+
+      {error && <p className="text-red-500 text-sm">{error}</p>}
 
       {/* Submit Button */}
       <button
