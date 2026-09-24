@@ -44,6 +44,10 @@ app.get("/api/health", (request, response) => {
 app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/admin", adminRoutes);
 
-app.listen(port,"0.0.0.0", () => {
-	console.log(`Alpha Admin API listening on port ${port}`);
-});
+if (require.main === module) {
+	app.listen(port, "0.0.0.0", () => {
+		console.log(`Alpha Admin API listening on port ${port}`);
+	});
+}
+
+module.exports = app;
