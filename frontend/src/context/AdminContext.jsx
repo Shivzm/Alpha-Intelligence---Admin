@@ -1,9 +1,12 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import adminApi from '../lib/adminApi';
+import { useAuth } from './AuthContext';
 
 const AdminContext = createContext();
 
 export function AdminProvider({ children }) {
+  const { isAuthenticated } = useAuth();
+
   // Check sessionStorage; defaults to 'dark' on a fresh tab
   const [theme, setTheme] = useState(() => {
     return sessionStorage.getItem('alpha_theme') || 'dark';
@@ -50,6 +53,8 @@ export function AdminProvider({ children }) {
   });
 
   useEffect(() => {
+    if (!isAuthenticated) return undefined;
+
     let active = true;
     adminApi.getAdminData().then((data) => {
       if (!active) return;
@@ -76,7 +81,7 @@ export function AdminProvider({ children }) {
       console.error('Unable to load admin data:', error);
     });
     return () => { active = false; };
-  }, []);
+  }, [isAuthenticated]);
 
   return (
     <AdminContext.Provider value={{ 

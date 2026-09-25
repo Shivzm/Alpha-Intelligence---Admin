@@ -29,6 +29,10 @@ app.use(
 app.use(helmet());
 app.use(express.json());
 
+app.get("/", (request, response) => {
+	response.json({ name: "Alpha Admin API", ok: true });
+});
+
 const authLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
 	limit: 10,
