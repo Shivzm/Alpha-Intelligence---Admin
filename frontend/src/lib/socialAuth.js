@@ -51,11 +51,11 @@ export async function initializeGoogleSignIn({ onSuccess, onError } = {}) {
     });
     container.replaceChildren();
     googleIdentity.renderButton(container, {
-      theme: 'outline',
+      theme: 'filled_black',
       size: 'large',
       text: 'continue_with',
       shape: 'rectangular',
-      width: 180,
+      width: Math.min(container.clientWidth, 400),
     });
   } catch (err) {
     onError?.(err instanceof Error ? err : new Error(String(err)));
