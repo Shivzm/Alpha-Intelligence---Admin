@@ -13,7 +13,9 @@ const providerKeys = {
 };
 
 function getCookieOptions() {
-  const sameSite = process.env.AUTH_COOKIE_SAME_SITE || "lax";
+  const sameSite = process.env.AUTH_COOKIE_SAME_SITE || (
+    process.env.NODE_ENV === "production" ? "none" : "lax"
+  );
 
   return {
     httpOnly: true,
