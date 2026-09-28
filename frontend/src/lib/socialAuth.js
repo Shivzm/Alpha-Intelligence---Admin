@@ -51,7 +51,7 @@ export async function initializeGoogleSignIn({ onSuccess, onError } = {}) {
     });
     container.replaceChildren();
     googleIdentity.renderButton(container, {
-      theme: 'filled_black',
+      theme: 'outline_dark',
       size: 'large',
       text: 'continue_with',
       shape: 'rectangular',
