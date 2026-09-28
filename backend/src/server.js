@@ -10,8 +10,10 @@ const adminRoutes = require("./routes/adminRoutes");
 
 const app = express();
 const port = process.env.PORT || 3000;
-const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:5173")
-	.split(",")
+
+const allowedOrigins = [
+	...(process.env.FRONTEND_URL || "http://localhost:5173").split(","),
+]
 	.map((origin) => origin.trim())
 	.map((origin) => origin.replace(/\/+$/, ""))
 	.filter(Boolean);
