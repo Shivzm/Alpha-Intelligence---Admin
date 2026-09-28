@@ -1,6 +1,7 @@
 require("dotenv").config();
 
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const express = require("express");
 const rateLimit = require("express-rate-limit");
 const helmet = require("helmet");
@@ -24,10 +25,12 @@ app.use(
 
 			return callback(new Error("Origin is not allowed by CORS."));
 		},
+		credentials: true,
 	}),
 );
 app.use(helmet());
 app.use(express.json());
+app.use(cookieParser());
 
 app.get("/", (request, response) => {
 	response.json({ name: "Alpha Admin API", ok: true });

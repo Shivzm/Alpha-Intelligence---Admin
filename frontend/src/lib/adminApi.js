@@ -5,12 +5,11 @@ async function request(path, options = {}) {
     throw new Error("VITE_API_URL is not configured.");
   }
 
-  const token = sessionStorage.getItem("alpha_auth_token");
   const response = await fetch(`${apiUrl}${path}`, {
     ...options,
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
   });
@@ -28,11 +27,26 @@ export const adminApi = {
     return request("/api/admin/data");
   },
 
+  getAuthStatus() {
+    return request("/api/auth/me");
+  },
+
   login(email, password) {
     return request("/api/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
+  },
+
+  loginWithGoogle(credential) {
+    return request("/api/auth/google", {
+      method: "POST",
+      body: JSON.stringify({ credential }),
+    });
+  },
+
+  logout() {
+    return request("/api/auth/logout", { method: "POST" });
   },
 
   requestPasswordReset(email) {

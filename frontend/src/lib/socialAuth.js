@@ -1,18 +1,4 @@
-/**
- * Google / Apple "Sign in" popups.
- *
- * Both providers require a client ID that's registered against your app's
- * real domain (Google Cloud Console / Apple Developer portal) — there's no
- * way around that from the frontend. Until those env vars are set, these
- * functions report a clear error instead of silently doing nothing, which
- * is what made the buttons look broken before.
- *
- * Configure:
- *   VITE_GOOGLE_CLIENT_ID   - Google Cloud Console > APIs & Services > Credentials
- *   VITE_APPLE_CLIENT_ID    - Apple Developer > Certificates, IDs & Profiles > Services ID
- *   VITE_APPLE_REDIRECT_URI - a URL registered on that Services ID
- * (see .env.example)
- */
+/** Configure VITE_GOOGLE_CLIENT_ID with an OAuth app registration (see .env.example). */
 
 const loadedScripts = new Set();
 
@@ -33,10 +19,10 @@ function loadScript(src) {
 }
 
 /**
- * Opens the Google OAuth popup and requests an access token.
- * @param {{ onSuccess?: (res: any) => void, onError?: (err: Error) => void }} handlers
+ * Renders Google's official sign-in button, which returns a signed ID token.
+ * @param {{ onSuccess?: (credential: string) => void, onError?: (err: Error) => void }} handlers
  */
-export async function signInWithGoogle({ onSuccess, onError } = {}) {
+export async function initializeGoogleSignIn({ onSuccess, onError } = {}) {
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   if (!clientId) {
     onError?.(new Error(
@@ -47,48 +33,32 @@ export async function signInWithGoogle({ onSuccess, onError } = {}) {
 
   try {
     await loadScript('https://accounts.google.com/gsi/client');
-    const client = window.google.accounts.oauth2.initTokenClient({
+    const googleIdentity = window.google?.accounts?.id;
+    const container = document.getElementById('google-signin-button');
+    if (!googleIdentity || !container) {
+      throw new Error('Google sign-in could not initialize.');
+    }
+
+    googleIdentity.initialize({
       client_id: clientId,
-      scope: 'openid email profile',
       callback: (response) => {
-        if (response.error) {
-          onError?.(new Error(response.error_description || response.error));
+        if (response.credential) {
+          onSuccess?.(response.credential);
         } else {
-          onSuccess?.(response);
+          onError?.(new Error('Google did not return an identity credential.'));
         }
       },
     });
-    client.requestAccessToken(); // this line opens the actual Google popup
-  } catch (err) {
-    onError?.(err instanceof Error ? err : new Error(String(err)));
-  }
-}
-
-/**
- * Opens the "Sign in with Apple" popup.
- * @param {{ onSuccess?: (res: any) => void, onError?: (err: Error) => void }} handlers
- */
-export async function signInWithApple({ onSuccess, onError } = {}) {
-  const clientId = import.meta.env.VITE_APPLE_CLIENT_ID;
-  const redirectURI = import.meta.env.VITE_APPLE_REDIRECT_URI;
-  if (!clientId || !redirectURI) {
-    onError?.(new Error(
-      'Apple sign-in is not configured yet: set VITE_APPLE_CLIENT_ID and VITE_APPLE_REDIRECT_URI in your .env file (see .env.example).'
-    ));
-    return;
-  }
-
-  try {
-    await loadScript('https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js');
-    window.AppleID.auth.init({
-      clientId,
-      scope: 'name email',
-      redirectURI,
-      usePopup: true,
+    container.replaceChildren();
+    googleIdentity.renderButton(container, {
+      theme: 'outline',
+      size: 'large',
+      text: 'continue_with',
+      shape: 'rectangular',
+      width: 180,
     });
-    const data = await window.AppleID.auth.signIn(); // this line opens the actual Apple popup
-    onSuccess?.(data);
   } catch (err) {
     onError?.(err instanceof Error ? err : new Error(String(err)));
   }
 }
+

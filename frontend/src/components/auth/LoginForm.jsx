@@ -17,10 +17,10 @@ export default function LoginForm() {
 
     try {
       const result = await adminApi.login(email, password);
-      if (!result?.token) {
-        throw new Error('The login response did not include a token.');
+      if (!result?.expiresAt) {
+        throw new Error('The login response did not include an expiration time.');
       }
-      login(result.token, '/admin-dashboard');
+      login(result.expiresAt, '/admin-dashboard');
     } catch (error) {
       setError(error.message || 'Unable to sign in.');
     }
