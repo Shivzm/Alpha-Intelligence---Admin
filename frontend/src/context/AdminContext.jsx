@@ -7,12 +7,9 @@ const AdminContext = createContext();
 export function AdminProvider({ children }) {
   const { isAuthenticated } = useAuth();
 
-  // Check sessionStorage; defaults to 'dark' on a fresh tab
-  const [theme, setTheme] = useState(() => {
-    return sessionStorage.getItem('alpha_theme') || 'dark';
-  });
+  const [theme, setTheme] = useState('dark');
 
-  // Inject the class and save to the current session
+  // Apply the selected theme.
   useEffect(() => {
     const root = window.document.documentElement;
     if (theme === 'dark') {
@@ -20,7 +17,6 @@ export function AdminProvider({ children }) {
     } else {
       root.classList.remove('dark');
     }
-    sessionStorage.setItem('alpha_theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {

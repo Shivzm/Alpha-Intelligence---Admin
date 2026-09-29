@@ -1,6 +1,13 @@
 import React, { useState } from "react";
 import { useAdmin } from "../../context/AdminContext";
 
+const DEFAULT_PERMISSIONS = {
+  vault: { view: false, export: false, revoke: false },
+  directory: { view: false, edit: false, approve: false },
+  aiCenter: { execute: false, telemetry: false },
+  logs: {},
+};
+
 export default function AdminManagement() {
   const { adminPermissions } = useAdmin();
   const [formData, setFormData] = useState({
@@ -10,9 +17,16 @@ export default function AdminManagement() {
   });
 
   // Authorization Matrix State
-  const [permissions, setPermissions] = useState({});
+  const [permissions, setPermissions] = useState(DEFAULT_PERMISSIONS);
 
-  React.useEffect(() => setPermissions(adminPermissions), [adminPermissions]);
+  React.useEffect(() => {
+    setPermissions({
+      vault: { ...DEFAULT_PERMISSIONS.vault, ...adminPermissions.vault },
+      directory: { ...DEFAULT_PERMISSIONS.directory, ...adminPermissions.directory },
+      aiCenter: { ...DEFAULT_PERMISSIONS.aiCenter, ...adminPermissions.aiCenter },
+      logs: { ...DEFAULT_PERMISSIONS.logs, ...adminPermissions.logs },
+    });
+  }, [adminPermissions]);
 
   const handlePermissionToggle = (module, action) => {
     setPermissions(prev => ({

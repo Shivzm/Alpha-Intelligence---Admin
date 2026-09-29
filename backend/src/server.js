@@ -1,6 +1,7 @@
 require("dotenv").config();
 
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const express = require("express");
 const rateLimit = require("express-rate-limit");
 const helmet = require("helmet");
@@ -9,8 +10,10 @@ const adminRoutes = require("./routes/adminRoutes");
 
 const app = express();
 const port = process.env.PORT || 3000;
-const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:5173")
-	.split(",")
+
+const allowedOrigins = [
+	...(process.env.FRONTEND_URL || "http://localhost:5173").split(","),
+]
 	.map((origin) => origin.trim())
 	.map((origin) => origin.replace(/\/+$/, ""))
 	.filter(Boolean);
@@ -24,10 +27,12 @@ app.use(
 
 			return callback(new Error("Origin is not allowed by CORS."));
 		},
+		credentials: true,
 	}),
 );
 app.use(helmet());
 app.use(express.json());
+app.use(cookieParser());
 
 app.get("/", (request, response) => {
 	response.json({ name: "Alpha Admin API", ok: true });
