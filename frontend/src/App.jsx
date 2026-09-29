@@ -42,6 +42,9 @@ import SystemAlerts from "./pages/security/SystemAlerts";
 // Document Layouts Group
 import CertificateTemplates from "./pages/document-layouts/CertificateTemplates";
 import IDCardTemplates from "./pages/document-layouts/IDCardTemplates";
+import InternshipPostings from "./pages/program-operations/InternshipPostings";
+import StipendsBroadcasts from "./pages/program-operations/StipendsBroadcasts";
+import OperationsInbox from "./pages/program-operations/OperationsInbox";
 
 function App() {
   return (
@@ -80,6 +83,10 @@ function App() {
                 
                 <Route path="/admin/security/admin-management" element={<AdminManagement />} />
                 <Route path="/admin/security/system-alerts" element={<SystemAlerts />} />
+
+                <Route path="/admin/program-operations/internships" element={<InternshipPostings />} />
+                <Route path="/admin/program-operations/stipends" element={<StipendsBroadcasts />} />
+                <Route path="/admin/program-operations/inbox" element={<OperationsInbox />} />
                 
                 <Route path="/admin/doc-layouts/certificate-templates" element={<CertificateTemplates />} />
                 <Route path="/admin/doc-layouts/id-card-templates" element={<IDCardTemplates />} />

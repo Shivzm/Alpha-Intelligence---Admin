@@ -1,31 +1,42 @@
 import React, { useState } from "react";
-import { useAdmin } from "../../context/AdminContext";
+import adminApi from "../../lib/adminApi";
 
 export default function DatabaseConfig() {
-  const { databaseConfig: apiConfig, setDatabaseConfig } = useAdmin();
   const [config, setConfig] = useState({});
-
-  React.useEffect(() => setConfig(apiConfig), [apiConfig]);
-
-  const [showPassword, setShowPassword] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
-  const [status, setStatus] = useState("Connected"); // Connected, Testing, Failed
+  const [status, setStatus] = useState("Checking");
+  const [error, setError] = useState("");
 
-  const handleTestConnection = () => {
+  React.useEffect(() => {
+    let active = true;
+    adminApi.getDatabaseSettings()
+      .then((result) => {
+        if (!active) return;
+        setConfig(result.data);
+        setStatus(result.data.status === "connected" ? "Connected" : "Unavailable");
+      })
+      .catch((requestError) => {
+        if (!active) return;
+        setStatus("Unavailable");
+        setError(requestError.message || "Unable to read database configuration.");
+      });
+    return () => { active = false; };
+  }, []);
+
+  const handleTestConnection = async () => {
     setIsTesting(true);
     setStatus("Testing");
-    
-    // Simulate network delay for testing connection
-    setTimeout(() => {
-      setIsTesting(false);
+    setError("");
+    try {
+      const result = await adminApi.testDatabaseConnection();
+      setConfig(result.data);
       setStatus("Connected");
-      alert("Connection Successful! Ping: 42ms");
-    }, 1500);
-  };
-
-  const handleSave = () => {
-    setDatabaseConfig(config);
-    alert("Database configuration updated successfully. A server restart may be required.");
+    } catch (requestError) {
+      setStatus("Unavailable");
+      setError(requestError.message || "Database connection test failed.");
+    } finally {
+      setIsTesting(false);
+    }
   };
 
   return (
@@ -38,6 +49,7 @@ export default function DatabaseConfig() {
       <p className="text-secondary text-sm mb-8">
         Manage your primary data cluster settings and monitor live connection health.
       </p>
+      {error && <p role="alert" className="mb-4 rounded border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
@@ -99,10 +111,10 @@ export default function DatabaseConfig() {
                 <label className="block text-secondary text-xs uppercase tracking-wider mb-2">Endpoint / Host URL</label>
                 <div className="relative">
                   <i className="ri-server-line absolute left-3 top-1/2 -translate-y-1/2 text-secondary"></i>
-                  <input 
-                    type="text" 
-                    value={config.host}
-                    onChange={(e) => setConfig({...config, host: e.target.value})}
+                  <input
+                    type="text"
+                    value={config.provider || "Cloud Firestore"}
+                    readOnly
                     className="w-full bg-surface-hover border border-divider rounded-lg py-2.5 pl-10 pr-4 text-sm text-gray-200 focus:outline-none focus:border-[#00e676]/50 transition-colors font-mono"
                   />
                 </div>
@@ -111,74 +123,36 @@ export default function DatabaseConfig() {
               {/* Port & DB Name */}
               <div>
                 <label className="block text-secondary text-xs uppercase tracking-wider mb-2">Port</label>
-                <input 
-                  type="text" 
-                  value={config.port}
-                  onChange={(e) => setConfig({...config, port: e.target.value})}
+                  <input
+                    type="text"
+                    value={config.projectId || "Managed by deployment configuration"}
+                    readOnly
                   className="w-full bg-surface-hover border border-divider rounded-lg py-2.5 px-4 text-sm text-gray-200 focus:outline-none focus:border-[#00e676]/50 transition-colors font-mono"
                 />
               </div>
               <div>
                 <label className="block text-secondary text-xs uppercase tracking-wider mb-2">Database Name</label>
-                <input 
-                  type="text" 
-                  value={config.dbName}
-                  onChange={(e) => setConfig({...config, dbName: e.target.value})}
+                  <input
+                    type="text"
+                    value={config.status || status}
+                    readOnly
                   className="w-full bg-surface-hover border border-divider rounded-lg py-2.5 px-4 text-sm text-gray-200 focus:outline-none focus:border-[#00e676]/50 transition-colors font-mono"
                 />
               </div>
 
-              {/* Username & Password */}
-              <div>
-                <label className="block text-secondary text-xs uppercase tracking-wider mb-2">Master Username</label>
-                <input 
-                  type="text" 
-                  value={config.username}
-                  onChange={(e) => setConfig({...config, username: e.target.value})}
-                  className="w-full bg-surface-hover border border-divider rounded-lg py-2.5 px-4 text-sm text-gray-200 focus:outline-none focus:border-[#00e676]/50 transition-colors font-mono"
-                />
-              </div>
-              <div>
-                <label className="block text-secondary text-xs uppercase tracking-wider mb-2">Master Password</label>
-                <div className="relative">
-                  <input 
-                    type={showPassword ? "text" : "password"} 
-                    value={config.password}
-                    onChange={(e) => setConfig({...config, password: e.target.value})}
-                    className="w-full bg-surface-hover border border-divider rounded-lg py-2.5 px-4 pr-10 text-sm text-gray-200 focus:outline-none focus:border-[#00e676]/50 transition-colors font-mono"
-                  />
-                  <button 
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary hover:text-gray-300"
-                  >
-                    <i className={showPassword ? "ri-eye-off-line" : "ri-eye-line"}></i>
-                  </button>
-                </div>
+              <div className="md:col-span-2 rounded border border-divider bg-surface-hover p-4 text-sm text-secondary">
+                Firebase service-account credentials are server-side secrets. Manage them in the backend Vercel project environment; they are never displayed or editable here.
               </div>
               
-              {/* SSL Toggle */}
               <div className="md:col-span-2 mt-2">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <div className={`w-10 h-5 rounded-full transition-colors relative ${config.ssl ? 'bg-[#00e676]' : 'bg-gray-700'}`} onClick={() => setConfig({...config, ssl: !config.ssl})}>
-                    <div className={`w-3 h-3 bg-white rounded-full absolute top-1 transition-transform ${config.ssl ? 'translate-x-6' : 'translate-x-1'}`}></div>
-                  </div>
-                  <span className="text-sm text-gray-300">Require SSL/TLS Encryption</span>
-                </label>
+                <span className="text-xs text-secondary">Credentials configured: {config.credentialsConfigured ? "Yes" : "No"}</span>
               </div>
 
             </div>
 
             {/* Action Buttons */}
-            <div className="mt-8 flex justify-end gap-4 border-t border-divider pt-6">
-              <button className="bg-transparent border border-gray-700 text-gray-300 hover:text-primary px-6 py-2 rounded-lg text-sm transition-colors">
-                Revert
-              </button>
-              <button 
-                onClick={handleSave}
-                className="bg-[#00e676] hover:bg-[#00c868] text-black font-semibold px-6 py-2 rounded-lg text-sm transition-colors shadow-[0_0_15px_rgba(0,230,118,0.2)]"
-              >
-                Save Configuration
-              </button>
+            <div className="mt-8 flex justify-end border-t border-divider pt-6">
+              <span className="text-xs text-secondary">Connection settings are managed through backend environment variables.</span>
             </div>
           </div>
         </div>

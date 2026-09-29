@@ -1,15 +1,37 @@
 import React, { useState } from "react";
 import { useAdmin } from "../../context/AdminContext";
+import adminApi from "../../lib/adminApi";
 
 export default function SystemAlerts() {
   const { alertChannels: channels, setAlertChannels, alerts, setAlerts } = useAdmin();
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState("");
 
-  const toggleChannel = (channel) => {
-    setAlertChannels({ ...channels, [channel]: !channels[channel] });
+  const toggleChannel = async (channel) => {
+    const enabled = !channels[channel];
+    setError("");
+    setSaving(channel);
+    try {
+      await adminApi.updateAlertChannel(channel, enabled);
+      setAlertChannels((current) => ({ ...current, [channel]: enabled }));
+    } catch (requestError) {
+      setError(requestError.message || "Unable to update this channel.");
+    } finally {
+      setSaving("");
+    }
   };
 
-  const toggleAlert = (id) => {
-    setAlerts(alerts.map(alert => alert.id === id ? { ...alert, active: !alert.active } : alert));
+  const resolveAlert = async (id) => {
+    setError("");
+    setSaving(id);
+    try {
+      const result = await adminApi.resolveAlert(id);
+      setAlerts((current) => current.map((alert) => alert.id === id ? { ...alert, ...result.data } : alert));
+    } catch (requestError) {
+      setError(requestError.message || "Unable to resolve this alert.");
+    } finally {
+      setSaving("");
+    }
   };
 
   return (
@@ -21,6 +43,7 @@ export default function SystemAlerts() {
       <p className="text-secondary text-sm mb-8">
         Configure automated security notifications and delivery channels.
       </p>
+      {error && <p role="alert" className="mb-4 rounded border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
@@ -39,9 +62,9 @@ export default function SystemAlerts() {
                     <p className="text-xs text-secondary">admin@alpha.com</p>
                   </div>
                 </div>
-                <div className={`w-10 h-5 rounded-full transition-colors relative cursor-pointer ${channels.email ? 'bg-[#00e676]' : 'bg-gray-700'}`} onClick={() => toggleChannel('email')}>
+                <button type="button" aria-label="Toggle email notifications" aria-pressed={channels.email} disabled={saving === "email"} className={`w-10 h-5 rounded-full transition-colors relative disabled:opacity-50 ${channels.email ? 'bg-[#00e676]' : 'bg-gray-700'}`} onClick={() => toggleChannel('email')}>
                   <div className={`w-3 h-3 bg-white rounded-full absolute top-1 transition-transform ${channels.email ? 'translate-x-6' : 'translate-x-1'}`}></div>
-                </div>
+                </button>
               </div>
 
               <div className="flex items-center justify-between">
@@ -52,9 +75,9 @@ export default function SystemAlerts() {
                     <p className="text-xs text-secondary">+1 (555) 019-2041</p>
                   </div>
                 </div>
-                <div className={`w-10 h-5 rounded-full transition-colors relative cursor-pointer ${channels.sms ? 'bg-[#00e676]' : 'bg-gray-700'}`} onClick={() => toggleChannel('sms')}>
+                <button type="button" aria-label="Toggle SMS alerts" aria-pressed={channels.sms} disabled={saving === "sms"} className={`w-10 h-5 rounded-full transition-colors relative disabled:opacity-50 ${channels.sms ? 'bg-[#00e676]' : 'bg-gray-700'}`} onClick={() => toggleChannel('sms')}>
                   <div className={`w-3 h-3 bg-white rounded-full absolute top-1 transition-transform ${channels.sms ? 'translate-x-6' : 'translate-x-1'}`}></div>
-                </div>
+                </button>
               </div>
 
               <div className="flex items-center justify-between">
@@ -65,9 +88,9 @@ export default function SystemAlerts() {
                     <p className="text-xs text-secondary">In-app push notifications</p>
                   </div>
                 </div>
-                <div className={`w-10 h-5 rounded-full transition-colors relative cursor-pointer ${channels.dashboard ? 'bg-[#00e676]' : 'bg-gray-700'}`} onClick={() => toggleChannel('dashboard')}>
+                <button type="button" aria-label="Toggle dashboard notifications" aria-pressed={channels.dashboard} disabled={saving === "dashboard"} className={`w-10 h-5 rounded-full transition-colors relative disabled:opacity-50 ${channels.dashboard ? 'bg-[#00e676]' : 'bg-gray-700'}`} onClick={() => toggleChannel('dashboard')}>
                   <div className={`w-3 h-3 bg-white rounded-full absolute top-1 transition-transform ${channels.dashboard ? 'translate-x-6' : 'translate-x-1'}`}></div>
-                </div>
+                </button>
               </div>
             </div>
           </div>
@@ -80,6 +103,9 @@ export default function SystemAlerts() {
             
             <div className="space-y-4">
               {alerts.map((alert) => (
+                (() => {
+                  const resolved = Boolean(alert.resolved);
+                  return (
                 <div key={alert.id} className="bg-surface-hover border border-divider/50 p-4 rounded-lg flex items-center justify-between hover:border-gray-700 transition-colors">
                   <div>
                     <div className="flex items-center gap-3 mb-1">
@@ -95,10 +121,12 @@ export default function SystemAlerts() {
                     <p className="text-xs text-secondary">{alert.desc}</p>
                   </div>
                   
-                  <div className={`w-10 h-5 rounded-full transition-colors relative cursor-pointer ${alert.active ? 'bg-[#00e676]' : 'bg-gray-700'}`} onClick={() => toggleAlert(alert.id)}>
-                    <div className={`w-3 h-3 bg-white rounded-full absolute top-1 transition-transform ${alert.active ? 'translate-x-6' : 'translate-x-1'}`}></div>
-                  </div>
+                  <button type="button" disabled={resolved || saving === alert.id} onClick={() => resolveAlert(alert.id)} className="rounded border border-divider px-3 py-1.5 text-xs text-secondary hover:text-primary disabled:opacity-60">
+                    {resolved ? "Resolved" : saving === alert.id ? "Resolving..." : "Resolve"}
+                  </button>
                 </div>
+                  );
+                })()
               ))}
             </div>
           </div>

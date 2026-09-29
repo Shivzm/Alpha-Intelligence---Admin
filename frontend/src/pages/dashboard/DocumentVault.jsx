@@ -1,15 +1,12 @@
 import React, { useState } from "react";
 import { useAdmin } from "../../context/AdminContext";
+import adminApi from "../../lib/adminApi";
 
 export default function DocumentVault() {
-  const { documents: apiDocuments } = useAdmin();
-  const [documents, setDocuments] = useState([]);
-
-  React.useEffect(() => {
-    setDocuments(apiDocuments);
-  }, [apiDocuments]);
-
+  const { documents, setDocuments } = useAdmin();
   const [selected, setSelected] = useState([]);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
   const handleSelectAll = (e) => {
     if (e.target.checked) setSelected(documents.map(doc => doc.id));
@@ -21,11 +18,28 @@ export default function DocumentVault() {
     else setSelected(selected.filter(item => item !== id));
   };
 
-  const handleBulkDelete = () => {
-    const confirmDelete = window.confirm(`Permanently revoke ${selected.length} documents?`);
-    if (confirmDelete) {
-      setDocuments(documents.filter(doc => !selected.includes(doc.id)));
-      setSelected([]);
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Revoke ${selected.length} selected documents?`)) return;
+    setError("");
+    setBusy(true);
+    const results = await Promise.allSettled(selected.map((id) => adminApi.revokeDocument(id)));
+    const succeeded = selected.filter((_, index) => results[index].status === "fulfilled");
+    const failed = selected.length - succeeded.length;
+    setDocuments((current) => current.map((document) => succeeded.includes(document.id)
+      ? { ...document, revokedAt: new Date().toISOString() }
+      : document));
+    setSelected((current) => current.filter((id) => !succeeded.includes(id)));
+    if (failed) setError(`Could not revoke ${failed} document${failed === 1 ? "" : "s"}.`);
+    setBusy(false);
+  };
+
+  const handleDownload = async (id) => {
+    setError("");
+    try {
+      const result = await adminApi.downloadDocument(id);
+      window.open(result.data.url, "_blank", "noopener,noreferrer");
+    } catch (requestError) {
+      setError(requestError.message || "Unable to create a document download link.");
     }
   };
 
@@ -37,6 +51,7 @@ export default function DocumentVault() {
         <h1 className="text-3xl font-semibold">Document Vault</h1>
       </div>
       <p className="text-secondary text-sm mb-8">View, verify, and export generated credentials.</p>
+      {error && <p role="alert" className="mb-4 rounded border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}
 
       {/* Toolbar */}
       <div className="flex justify-between items-center mb-6 h-10">
@@ -51,18 +66,14 @@ export default function DocumentVault() {
              <span className="text-sm text-red-500 mr-2">{selected.length} selected</span>
              <button 
                onClick={handleBulkDelete}
+               disabled={busy}
                className="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 hover:border-red-500/50 px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2"
              >
                <i className="ri-delete-bin-line"></i> Revoke
              </button>
-             <button className="bg-[#00e676] text-black px-4 py-2 rounded-lg text-sm flex items-center gap-2 font-semibold">
-               <i className="ri-download-cloud-2-line"></i> Export
-             </button>
           </div>
         ) : (
-          <button className="bg-[#00e676] hover:bg-[#00c868] text-black font-semibold px-6 py-2 rounded-lg text-sm shadow-[0_0_15px_rgba(0,230,118,0.3)] transition-all">
-            Export All
-          </button>
+          <span className="text-xs text-secondary">{documents.length} loaded</span>
         )}
       </div>
 
@@ -83,6 +94,7 @@ export default function DocumentVault() {
               <th className="px-6 py-4 font-medium">Student Name</th>
               <th className="px-6 py-4 font-medium">Type</th>
               <th className="px-6 py-4 font-medium">Date Generated</th>
+              <th className="px-6 py-4 font-medium text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="text-sm text-gray-300">
@@ -106,6 +118,11 @@ export default function DocumentVault() {
                 </td>
                 
                 <td className="px-6 py-4 text-secondary">{row.date}</td>
+                <td className="px-6 py-4 text-right">
+                  <button type="button" disabled={busy || row.revokedAt} onClick={() => handleDownload(row.id)} className="rounded border border-divider px-3 py-1.5 text-xs text-secondary hover:text-primary disabled:opacity-50" title="Download document">
+                    <i className="ri-download-line"></i>
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

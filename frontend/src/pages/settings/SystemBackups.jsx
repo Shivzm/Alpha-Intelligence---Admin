@@ -1,36 +1,59 @@
 import React, { useState } from "react";
 import { useAdmin } from "../../context/AdminContext";
+import adminApi from "../../lib/adminApi";
 
 export default function SystemBackups() {
   const { backups: apiBackups, setBackups: setApiBackups } = useAdmin();
   const [isBackingUp, setIsBackingUp] = useState(false);
-  const [progress, setProgress] = useState(0);
-  
+  const [schedule, setSchedule] = useState({ enabled: false, cron: null, timezone: "UTC" });
+  const [error, setError] = useState("");
   const backups = apiBackups;
 
-  const handleManualBackup = () => {
-    setIsBackingUp(true);
-    setProgress(0);
-    
-    // Simulate backup progress
-    const interval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsBackingUp(false);
-          // Add new backup to the top of the list
-          setApiBackups([{
-            id: `BAK-${Math.floor(Math.random() * 900) + 1000}`,
-            date: new Date().toLocaleString(),
-            size: "1.2 GB",
-            type: "Manual",
-            status: "Verified"
-          }, ...backups]);
-          return 0;
-        }
-        return prev + 10;
+  React.useEffect(() => {
+    let active = true;
+    Promise.all([adminApi.listBackups(), adminApi.getBackupSchedule()])
+      .then(([backupResult, scheduleResult]) => {
+        if (!active) return;
+        setApiBackups(backupResult.data);
+        setSchedule(scheduleResult.data);
+      })
+      .catch((requestError) => {
+        if (active) setError(requestError.message || "Unable to load backup status.");
       });
-    }, 300);
+    return () => { active = false; };
+  }, [setApiBackups]);
+
+  const handleManualBackup = async () => {
+    setIsBackingUp(true);
+    setError("");
+    try {
+      const result = await adminApi.createBackup();
+      setApiBackups((current) => [result.data, ...current]);
+    } catch (requestError) {
+      setError(requestError.message || "Backup creation is unavailable.");
+    } finally {
+      setIsBackingUp(false);
+    }
+  };
+
+  const handleDownload = async (id) => {
+    setError("");
+    try {
+      const result = await adminApi.downloadBackup(id);
+      window.open(result.data.url, "_blank", "noopener,noreferrer");
+    } catch (requestError) {
+      setError(requestError.message || "Backup storage is not configured.");
+    }
+  };
+
+  const handleRestore = async (id) => {
+    if (!window.confirm("Restore this snapshot? This may replace current application data.")) return;
+    setError("");
+    try {
+      await adminApi.restoreBackup(id);
+    } catch (requestError) {
+      setError(requestError.message || "Backup restore is unavailable.");
+    }
   };
 
   return (
@@ -42,6 +65,7 @@ export default function SystemBackups() {
       <p className="text-secondary text-sm mb-8">
         Manage automated data snapshots and create manual restore points.
       </p>
+      {error && <p role="alert" className="mb-4 rounded border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         
@@ -52,18 +76,18 @@ export default function SystemBackups() {
           <div className="mb-6">
             <p className="text-xs text-secondary uppercase tracking-wider mb-1">Next Automated Backup</p>
             <p className="text-sm font-medium text-primary flex items-center gap-2">
-              <i className="ri-time-line text-[#00e676]"></i> Tomorrow, 03:00 AM
+              <i className="ri-time-line text-[#00e676]"></i> {schedule.enabled ? `${schedule.cron} (${schedule.timezone})` : "Not configured"}
             </p>
           </div>
 
           <div className="mb-8">
             <p className="text-xs text-secondary uppercase tracking-wider mb-1">Storage Used</p>
             <div className="flex items-end gap-2 mb-2">
-              <span className="text-3xl font-bold text-primary">45.6</span>
-              <span className="text-secondary mb-1">GB / 100 GB</span>
+              <span className="text-3xl font-bold text-primary">--</span>
+              <span className="text-secondary mb-1">Storage metrics unavailable</span>
             </div>
             <div className="w-full bg-gray-800/50 rounded-full h-1.5">
-              <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: '45.6%' }}></div>
+              <div className="bg-gray-700 h-1.5 rounded-full w-full"></div>
             </div>
           </div>
 
@@ -74,7 +98,7 @@ export default function SystemBackups() {
           >
             {isBackingUp ? (
               <>
-                <i className="ri-loader-4-line animate-spin"></i> Creating Backup ({progress}%)
+                <i className="ri-loader-4-line animate-spin"></i> Creating Backup
               </>
             ) : (
               <>
@@ -88,9 +112,7 @@ export default function SystemBackups() {
         <div className="bg-surface border border-divider rounded-xl overflow-hidden lg:col-span-2 flex flex-col">
           <div className="p-6 border-b border-divider flex justify-between items-center">
             <h2 className="text-lg font-medium text-primary">Restore Points</h2>
-            <button className="text-sm text-[#00e676] hover:text-primary transition-colors flex items-center gap-1">
-              <i className="ri-settings-3-line"></i> Configure Schedule
-            </button>
+            <span className="text-xs text-secondary">Schedule is managed by deployment cron configuration.</span>
           </div>
           
           <table className="w-full text-left border-collapse">
@@ -103,20 +125,20 @@ export default function SystemBackups() {
               </tr>
             </thead>
             <tbody className="text-sm text-gray-300">
-              {backups.map((row, idx) => (
-                <tr key={idx} className="border-b border-divider/50 hover:bg-white/[0.02] transition-colors">
+              {backups.map((row) => (
+                <tr key={row.id} className="border-b border-divider/50 hover:bg-white/[0.02] transition-colors">
                   <td className="px-6 py-4 font-mono text-xs text-secondary">{row.id}</td>
-                  <td className="px-6 py-4">{row.date}</td>
+                  <td className="px-6 py-4">{row.createdAt || row.date || ""}</td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded text-[10px] uppercase tracking-wider font-semibold ${row.type === 'Automated' ? 'bg-blue-500/10 text-blue-400' : 'bg-purple-500/10 text-purple-400'}`}>
                       {row.type}
                     </span>
                   </td>
                   <td className="px-6 py-4 flex justify-end gap-2">
-                    <button className="bg-[#1a1c26] hover:bg-[#252836] border border-gray-700/50 text-gray-300 px-3 py-1.5 rounded-md text-xs transition-colors flex items-center gap-1" title="Download Archive">
+                    <button onClick={() => handleDownload(row.id)} className="bg-[#1a1c26] hover:bg-[#252836] border border-gray-700/50 text-gray-300 px-3 py-1.5 rounded-md text-xs transition-colors flex items-center gap-1" title="Download Archive">
                       <i className="ri-download-line"></i>
                     </button>
-                    <button className="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 hover:border-red-500/50 px-3 py-1.5 rounded-md text-xs transition-colors flex items-center gap-1" title="Restore Data">
+                    <button onClick={() => handleRestore(row.id)} className="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 hover:border-red-500/50 px-3 py-1.5 rounded-md text-xs transition-colors flex items-center gap-1" title="Restore Data">
                       <i className="ri-history-line"></i> Restore
                     </button>
                   </td>

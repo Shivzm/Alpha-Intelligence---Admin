@@ -1,8 +1,20 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useAdmin } from "../../context/AdminContext";
+import adminApi from "../../lib/adminApi";
 
 export default function MainOverview() {
   const { dashboardStats, recentActivity } = useAdmin();
+  const [applicationSeries, setApplicationSeries] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+    adminApi.getApplicationAnalytics()
+      .then((result) => { if (active) setApplicationSeries(result.data); })
+      .catch(() => { if (active) setApplicationSeries([]); });
+    return () => { active = false; };
+  }, []);
+
+  const maxApplications = Math.max(1, ...applicationSeries.map((item) => item.count));
   return (
     <div className="h-full w-full p-8 overflow-y-auto">
       <div className="flex items-center justify-between mb-8">
@@ -36,15 +48,17 @@ export default function MainOverview() {
         {/* Left Side: Chart Placeholder & Quick Actions */}
         <div className="lg:col-span-2 space-y-8">
           <div className="bg-surface border border-divider rounded-xl p-6 h-80 flex flex-col">
-            <h2 className="text-lg font-medium text-primary mb-6">Document Generation Trend</h2>
+            <h2 className="text-lg font-medium text-primary mb-6">Application Intake</h2>
             <div className="flex-1 border border-divider/50 rounded-lg bg-surface-hover flex items-end justify-between px-4 pb-4 pt-10 relative">
-              {/* Simulated Chart Bars */}
-              <div className="absolute top-4 left-4 text-xs text-gray-600 font-mono">Last 7 Days</div>
-              {[40, 65, 30, 85, 55, 90, 75].map((h, i) => (
-                <div key={i} className="w-[10%] bg-gradient-to-t from-[#00e676]/80 to-[#00e676]/20 rounded-t-sm hover:opacity-80 transition-opacity cursor-pointer group relative" style={{ height: `${h}%` }}>
-                   <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-primary text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100">{h * 10}</div>
+              <div className="absolute top-4 left-4 text-xs text-gray-600 font-mono">Applications by day</div>
+              {applicationSeries.map((point) => (
+                <div key={point.period} className="group relative flex h-full w-full items-end justify-center mx-1">
+                  <div className="w-full bg-[#00e676]/70 rounded-t-sm transition-colors group-hover:bg-[#00e676]" style={{ height: `${Math.max(2, point.count / maxApplications * 100)}%` }}>
+                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-800 text-primary text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100">{point.period}: {point.count}</span>
+                  </div>
                 </div>
               ))}
+              {!applicationSeries.length && <div className="w-full self-center text-center text-sm text-secondary">No application activity yet.</div>}
             </div>
           </div>
         </div>

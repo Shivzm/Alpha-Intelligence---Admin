@@ -1,35 +1,48 @@
 import React, { useState, useEffect } from "react";
 import { useAdmin } from "../../context/AdminContext";
+import adminApi from "../../lib/adminApi";
 
 export default function ActiveTasks() {
-  const { tasks: apiTasks } = useAdmin();
+  const { tasks: apiTasks, setTasks: setApiTasks } = useAdmin();
   const [tasks, setTasks] = useState([]);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    setTasks(apiTasks);
+    setTasks(apiTasks.map((task) => ({
+      ...task,
+      name: task.title || task.name || "Background task",
+      type: task.type || task.priority || "Task",
+      status: task.status ? task.status[0].toUpperCase() + task.status.slice(1) : "Queued",
+      progress: task.progress ?? (task.status === "completed" ? 100 : 0),
+      timeRemaining: task.dueDate || "Queued",
+      color: task.status === "completed" ? "bg-[#00e676]" : "bg-blue-400",
+    })));
   }, [apiTasks]);
 
-  // Simulate progress bar movement
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTasks(currentTasks => 
-        currentTasks.map(task => {
-          if (task.status === "Running" && task.progress < 100) {
-            const newProgress = task.progress + Math.floor(Math.random() * 5);
-            if (newProgress >= 100) {
-              return { ...task, progress: 100, status: "Completed", timeRemaining: "Done", color: "bg-[#00e676]" };
-            }
-            return { ...task, progress: newProgress };
-          }
-          return task;
-        })
-      );
-    }, 1500);
-    return () => clearInterval(interval);
-  }, []);
+  const handleCancel = async (id) => {
+    setError("");
+    try {
+      await adminApi.deleteTask(id);
+      setApiTasks((current) => current.filter((task) => task.id !== id));
+    } catch (requestError) {
+      setError(requestError.message || "Unable to remove this task.");
+    }
+  };
 
-  const handleCancel = (id) => {
-    setTasks(tasks.filter(task => task.id !== id));
+  const handleCreateTask = async () => {
+    const title = window.prompt("Task title:")?.trim();
+    if (!title) return;
+    setError("");
+    setSaving(true);
+    try {
+      const result = await adminApi.createTask({ title, status: "queued", priority: "normal" });
+      setApiTasks((current) => [result.data, ...current]);
+    } catch (requestError) {
+      setError(requestError.message || "Unable to create this task.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -41,6 +54,7 @@ export default function ActiveTasks() {
       <p className="text-secondary text-sm mb-8">
         Monitor background workers, batch generation queues, and long-running AI processes.
       </p>
+      {error && <p role="alert" className="mb-4 rounded border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}
 
       <div className="bg-surface border border-divider rounded-xl overflow-hidden">
         <div className="p-6 border-b border-divider flex justify-between items-center bg-surface-hover/50">
@@ -51,8 +65,8 @@ export default function ActiveTasks() {
             </span>
             Live Process Queue
           </h2>
-          <button className="text-sm text-secondary hover:text-primary transition-colors flex items-center gap-1">
-            <i className="ri-pause-circle-line"></i> Pause All
+          <button type="button" disabled={saving} onClick={handleCreateTask} className="text-sm text-secondary hover:text-primary transition-colors flex items-center gap-1 disabled:opacity-50">
+            <i className="ri-add-line"></i> Create Task
           </button>
         </div>
 

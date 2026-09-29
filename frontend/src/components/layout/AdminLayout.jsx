@@ -144,6 +144,15 @@ export default function AdminLayout() {
             ]}
           />
           <NavItem
+            icon="ri-briefcase-4-line"
+            label="Program Operations"
+            subItems={[
+              { label: "Internship Postings", path: "/admin/program-operations/internships" },
+              { label: "Stipends & Broadcasts", path: "/admin/program-operations/stipends" },
+              { label: "Operations Inbox", path: "/admin/program-operations/inbox" },
+            ]}
+          />
+          <NavItem
             icon="ri-lock-2-line"
             label="Document Layouts"
             subItems={[

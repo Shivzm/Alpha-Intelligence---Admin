@@ -1,10 +1,13 @@
 import React, { useState } from "react";
 import { useAdmin } from "../../context/AdminContext"; // Import the context hook!
+import adminApi from "../../lib/adminApi";
 
 export default function InternApplications() {
   // Pull both applications and records from our global context
-  const { applications, setApplications, setRecords } = useAdmin();
+  const { applications, setApplications } = useAdmin();
   const [selected, setSelected] = useState([]);
+  const [error, setError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleSelectAll = (e) => {
     if (e.target.checked) setSelected(applications.map(app => app.id));
@@ -16,46 +19,36 @@ export default function InternApplications() {
     else setSelected(selected.filter(item => item !== id));
   };
 
-  // The wiring logic
-  const handleAction = (id, action) => {
-    if (action === 'Approved') {
-      // Find the specific application data
-      const approvedApp = applications.find(app => app.id === id);
-      
-      // Format it for the Manage Records table
-      const newRecord = {
-        id: `USR-${Math.floor(Math.random() * 900) + 100}`, // Generate a fake User ID
-        name: approvedApp.name,
-        program: approvedApp.role,
-        status: "Active"
-      };
-      
-      // Push it to the Records page state
-      setRecords(prevRecords => [...prevRecords, newRecord]);
+  const handleAction = async (id, to) => {
+    const reason = window.prompt(`Reason for marking this application ${to.toLowerCase()}:`);
+    if (!reason?.trim()) return;
+    setError("");
+    setIsSaving(true);
+    try {
+      await adminApi.updateApplicationStatus(id, to, reason.trim());
+      setApplications((current) => current.filter((application) => application.id !== id));
+      setSelected((current) => current.filter((selectedId) => selectedId !== id));
+    } catch (requestError) {
+      setError(requestError.message || "Unable to update this application.");
+    } finally {
+      setIsSaving(false);
     }
-
-    // Regardless of Approve or Reject, remove them from the pending applications list
-    setApplications(applications.filter(app => app.id !== id));
   };
 
-  // Bulk action wiring
-  const handleBulkAction = (action) => {
-    if (action === 'Approved') {
-      const appsToApprove = applications.filter(app => selected.includes(app.id));
-      
-      const newRecords = appsToApprove.map(app => ({
-        id: `USR-${Math.floor(Math.random() * 900) + 100}`,
-        name: app.name,
-        program: app.role,
-        status: "Active"
-      }));
-
-      setRecords(prevRecords => [...prevRecords, ...newRecords]);
+  const handleBulkAction = async (to) => {
+    const reason = window.prompt(`Reason for marking ${selected.length} applications ${to.toLowerCase()}:`);
+    if (!reason?.trim()) return;
+    setError("");
+    setIsSaving(true);
+    try {
+      await adminApi.bulkUpdateApplicationStatus(selected, to, reason.trim());
+      setApplications((current) => current.filter((application) => !selected.includes(application.id)));
+      setSelected([]);
+    } catch (requestError) {
+      setError(requestError.message || "Unable to update the selected applications.");
+    } finally {
+      setIsSaving(false);
     }
-
-    // Remove all selected from the pending list
-    setApplications(applications.filter(app => !selected.includes(app.id)));
-    setSelected([]); // Clear selection
   };
 
   return (
@@ -65,6 +58,7 @@ export default function InternApplications() {
         <h1 className="text-3xl font-semibold">Intern Applications</h1>
       </div>
       <p className="text-secondary text-sm mb-8">Review incoming applications and approve onboarding.</p>
+      {error && <p role="alert" className="mb-4 rounded border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}
 
       {/* Toolbar */}
       <div className="flex justify-between items-center mb-6 h-10">
@@ -77,12 +71,14 @@ export default function InternApplications() {
           <div className="flex items-center gap-3 animate-fade-in">
              <span className="text-sm text-[#00e676] mr-2">{selected.length} selected</span>
              <button 
-               onClick={() => handleBulkAction('Approved')}
+               disabled={isSaving}
+               onClick={() => handleBulkAction('Selected')}
                className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 hover:border-emerald-500/50 px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2"
              >
-               <i className="ri-check-double-line"></i> Bulk Approve
+               <i className="ri-check-double-line"></i> Bulk Select
              </button>
              <button 
+               disabled={isSaving}
                onClick={() => handleBulkAction('Rejected')}
                className="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 hover:border-red-500/50 px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2"
              >
@@ -122,12 +118,14 @@ export default function InternApplications() {
                   <td className="px-6 py-4 text-secondary">{row.date}</td>
                   <td className="px-6 py-4 flex justify-end gap-2">
                     <button 
-                      onClick={() => handleAction(row.id, 'Approved')}
+                      disabled={isSaving}
+                      onClick={() => handleAction(row.id, 'Selected')}
                       className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 hover:border-emerald-500/50 px-4 py-1.5 rounded-md text-xs transition-colors flex items-center gap-1"
                     >
-                      <i></i> Approve
+                      <i></i> Select
                     </button>
                     <button 
+                      disabled={isSaving}
                       onClick={() => handleAction(row.id, 'Rejected')}
                       className="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 hover:border-red-500/50 px-4 py-1.5 rounded-md text-xs transition-colors flex items-center gap-1"
                     >

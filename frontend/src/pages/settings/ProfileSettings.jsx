@@ -1,9 +1,40 @@
 import React, { useState } from "react";
 import { useAdmin } from "../../context/AdminContext";
 import ThemeToggle from "../../components/ThemeToggle";
+import adminApi from "../../lib/adminApi";
 
 export default function ProfileSettings() {
-  const { theme, toggleTheme, profileData, setProfileData } = useAdmin();
+  const { profileData, setProfileData } = useAdmin();
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  React.useEffect(() => {
+    let active = true;
+    adminApi.getAdminProfile()
+      .then((result) => {
+        if (active) setProfileData((current) => ({ ...current, ...result.data }));
+      })
+      .catch((requestError) => {
+        if (active) setError(requestError.message || "Unable to load your admin profile.");
+      });
+    return () => { active = false; };
+  }, [setProfileData]);
+
+  const handleSave = async () => {
+    setError("");
+    setSaving(true);
+    try {
+      const result = await adminApi.updateAdminProfile({
+        firstName: profileData.firstName || "",
+        lastName: profileData.lastName || "",
+      });
+      setProfileData((current) => ({ ...current, ...result.data }));
+    } catch (requestError) {
+      setError(requestError.message || "Unable to save your profile.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="h-full w-full p-8 overflow-y-auto bg-base transition-colors duration-300">
@@ -15,6 +46,7 @@ export default function ProfileSettings() {
       <p className="text-secondary text-sm mb-8">
         Manage your administrator profile details and appearance.
       </p>
+      {error && <p role="alert" className="mb-4 max-w-4xl rounded border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}
 
       <div className="max-w-4xl space-y-8 pb-12">
         
@@ -45,7 +77,7 @@ export default function ProfileSettings() {
               <label className="block text-secondary text-xs uppercase tracking-wider mb-2 font-medium">First Name</label>
               <input 
                 type="text" 
-                value={profileData.firstName}
+                value={profileData.firstName || ""}
                 onChange={(e) => setProfileData({...profileData, firstName: e.target.value})}
                 className="w-full bg-surface-hover border border-divider rounded-lg py-2.5 px-4 text-sm text-primary focus:outline-none focus:border-brand transition-colors"
               />
@@ -54,7 +86,7 @@ export default function ProfileSettings() {
               <label className="block text-secondary text-xs uppercase tracking-wider mb-2 font-medium">Last Name</label>
               <input 
                 type="text" 
-                value={profileData.lastName}
+                value={profileData.lastName || ""}
                 onChange={(e) => setProfileData({...profileData, lastName: e.target.value})}
                 className="w-full bg-surface-hover border border-divider rounded-lg py-2.5 px-4 text-sm text-primary focus:outline-none focus:border-brand transition-colors"
               />
@@ -62,8 +94,8 @@ export default function ProfileSettings() {
           </div>
           
           <div className="flex justify-end">
-            <button className="bg-brand hover:bg-brand-hover text-primary font-semibold px-6 py-2 rounded-lg text-sm transition-colors">
-              Save Profile Data
+            <button type="button" disabled={saving} onClick={handleSave} className="bg-brand hover:bg-brand-hover text-primary font-semibold px-6 py-2 rounded-lg text-sm transition-colors disabled:opacity-50">
+              {saving ? "Saving..." : "Save Profile Data"}
             </button>
           </div>
         </div>

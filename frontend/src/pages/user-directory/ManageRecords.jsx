@@ -1,11 +1,27 @@
 import React, { useState } from "react";
 import { useAdmin } from "../../context/AdminContext";
+import adminApi from "../../lib/adminApi";
 
 export default function ManageRecords() {
   // Use the records from global state instead of local state
   const { records, setRecords } = useAdmin();
   
   const [selected, setSelected] = useState([]);
+  const [error, setError] = useState("");
+  const [savingRecordId, setSavingRecordId] = useState(null);
+
+  const handleStatusChange = async (record, status) => {
+    setError("");
+    setSavingRecordId(record.id);
+    try {
+      const result = await adminApi.updateRecordStatus(record.id, status);
+      setRecords((current) => current.map((item) => item.id === record.id ? { ...item, ...result.data } : item));
+    } catch (requestError) {
+      setError(requestError.message || "Unable to update this record.");
+    } finally {
+      setSavingRecordId(null);
+    }
+  };
 
   // Checkbox Handlers
   const handleSelectAll = (e) => {
@@ -36,6 +52,7 @@ export default function ManageRecords() {
         <h1 className="text-3xl font-semibold">Manage Records</h1>
       </div>
       <p className="text-secondary text-sm mb-8">Edit user profiles and generate official credentials.</p>
+      {error && <p role="alert" className="mb-4 rounded border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}
 
       {/* Dynamic Toolbar */}
       <div className="flex justify-between items-center mb-6 h-10">
@@ -105,9 +122,17 @@ export default function ManageRecords() {
                 <td className="px-6 py-4 font-medium text-primary">{row.name}</td>
                 <td className="px-6 py-4">{row.program}</td>
                 <td className="px-6 py-4">
-                  <span className={`px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider font-semibold ${row.status === 'Active' ? 'bg-[#00e676]/10 text-[#00e676]' : 'bg-yellow-500/10 text-yellow-500'}`}>
-                    {row.status}
-                  </span>
+                  <select
+                    value={(row.status || "active").toLowerCase()}
+                    disabled={savingRecordId === row.id}
+                    onChange={(event) => handleStatusChange(row, event.target.value)}
+                    aria-label={`Status for record ${row.id}`}
+                    className={`rounded border border-divider bg-surface px-2.5 py-1 text-[10px] uppercase font-semibold focus:outline-none focus:border-[#00e676] ${row.status === 'active' || row.status === 'Active' ? 'text-[#00e676]' : 'text-yellow-500'}`}
+                  >
+                    <option value="active">Active</option>
+                    <option value="completed">Completed</option>
+                    <option value="terminated">Terminated</option>
+                  </select>
                 </td>
               </tr>
             ))}
