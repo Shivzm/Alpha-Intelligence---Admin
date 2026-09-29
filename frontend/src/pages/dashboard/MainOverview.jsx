@@ -19,7 +19,7 @@ export default function MainOverview() {
     <div className="h-full w-full p-8 overflow-y-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-semibold mb-1">System Overview</h1>
+          <h1 className="text-3xl font-semibold mb-1">Main Overview</h1>
           <p className="text-secondary text-sm">Welcome back. Here is your system snapshot for today.</p>
         </div>
         <div className="bg-surface-hover border border-divider px-4 py-2 rounded-lg text-sm text-gray-300 flex items-center gap-2">
