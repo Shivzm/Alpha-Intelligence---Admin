@@ -9,6 +9,7 @@ const helmet = require("helmet");
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const publicRoutes = require("./routes/publicRoutes");
+const studentRoutes = require("./routes/studentRoutes");
 const internalRoutes = require("./routes/internalRoutes");
 const { apiErrorHandler } = require("./middleware/apiErrorHandler");
 
@@ -62,6 +63,7 @@ app.get("/api/health", (request, response) => {
 
 app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/public", publicRoutes);
+app.use("/api/student", studentRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/internal", internalRoutes);
 app.use((request, response, next) => {

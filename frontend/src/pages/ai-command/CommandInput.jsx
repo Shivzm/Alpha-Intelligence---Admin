@@ -1,16 +1,18 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useAdmin } from "../../context/AdminContext";
 import adminApi from "../../lib/adminApi";
 
 export default function CommandInput() {
   const { adminProfile, commandHistory: apiHistory } = useAdmin();
   const [input, setInput] = useState("");
-  const [history, setHistory] = useState([]);
+  const [localHistory, setLocalHistory] = useState([]);
+  const [historyOverrides, setHistoryOverrides] = useState({});
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [updatingCommand, setUpdatingCommand] = useState("");
 
-  useEffect(() => {
-    setHistory(apiHistory.flatMap((command) => [
+  const history = useMemo(() => [
+    ...apiHistory.flatMap((command) => [
       { role: "user", text: command.input || "" },
       {
         role: "system",
@@ -20,8 +22,11 @@ export default function CommandInput() {
         commandId: command.id,
         status: command.status,
       },
-    ]));
-  }, [apiHistory]);
+    ]),
+    ...localHistory,
+  ].map((message) => historyOverrides[message.commandId]
+    ? { ...message, ...historyOverrides[message.commandId] }
+    : message), [apiHistory, historyOverrides, localHistory]);
   
   const endOfMessagesRef = useRef(null);
 
@@ -37,19 +42,21 @@ export default function CommandInput() {
 
     setError("");
     setIsSubmitting(true);
-    setHistory((current) => [...current, { role: "user", text: commandText }]);
+    setLocalHistory((current) => [...current, { role: "user", text: commandText }]);
     setInput("");
     try {
+      const analysis = await adminApi.analyzeCommand(commandText);
       const result = await adminApi.submitCommand(commandText);
       const command = result.data;
       const message = command.intentId
         ? `Matched ${command.intentId} with ${Math.round((command.confidence || 0) * 100)}% confidence. Proposed action: ${command.proposedAction || "none"}.`
         : "No configured intent matched this command.";
-      setHistory((current) => [...current, {
+      setLocalHistory((current) => [...current, {
         role: "system",
         text: message,
         commandId: command.id,
         status: command.status,
+        nlpResult: analysis.data.result,
       }]);
     } catch (requestError) {
       setError(requestError.message || "Unable to submit this command.");
@@ -60,15 +67,31 @@ export default function CommandInput() {
 
   const updateCommand = async (commandId, action) => {
     setError("");
+    setUpdatingCommand(commandId);
     try {
       const result = action === "confirm"
         ? await adminApi.confirmCommand(commandId)
         : await adminApi.cancelCommand(commandId);
-      setHistory((current) => current.map((message) => message.commandId === commandId
-        ? { ...message, status: result.data.status, text: action === "confirm" ? "Action executed." : "Command cancelled." }
-        : message));
+      setHistoryOverrides((current) => ({
+        ...current,
+        [commandId]: {
+          status: result.data.status,
+          text: action === "confirm" ? "Action executed." : "Command cancelled.",
+        },
+      }));
     } catch (requestError) {
       setError(requestError.message || "Unable to update this command.");
+      try {
+        const latest = await adminApi.getCommand(commandId);
+        setHistoryOverrides((current) => ({
+          ...current,
+          [commandId]: { ...current[commandId], status: latest.data.status },
+        }));
+      } catch (refreshError) {
+        setError(`${requestError.message || "Unable to update this command."} Current command status could not be refreshed: ${refreshError.message}`);
+      }
+    } finally {
+      setUpdatingCommand("");
     }
   };
 
@@ -112,10 +135,22 @@ export default function CommandInput() {
                   : 'bg-[#00e676]/5 text-[#00e676] border border-[#00e676]/20 font-mono shadow-[0_0_15px_rgba(0,230,118,0.05)]'
               }`}>
                 {msg.text}
+                {msg.nlpResult && (
+                  <div className="mt-3 border-t border-[#00e676]/20 pt-3 text-xs">
+                    <p className="font-semibold">Advisory NLP preview</p>
+                    <p>Intent: {msg.nlpResult.intent} ({Math.round((msg.nlpResult.intentConfidence || 0) * 100)}%)</p>
+                    <p>Skills: {msg.nlpResult.filters.skills.join(", ") || "none detected"}</p>
+                    <p>Status filter: {msg.nlpResult.filters.status || "none"}</p>
+                    <p>Department filter: {msg.nlpResult.filters.department || "none"}</p>
+                    <p className="mt-1 text-secondary">{msg.nlpResult.answer}</p>
+                    <p className="mt-1 text-secondary">NLP did not search applicant records or execute an action.</p>
+                  </div>
+                )}
+                {msg.commandId && <p className="mt-2 text-[10px] uppercase tracking-wide text-secondary">Command status: {msg.status}</p>}
                 {msg.commandId && msg.status === "pending" && (
                   <div className="mt-3 flex gap-2 border-t border-[#00e676]/20 pt-3">
-                    <button type="button" onClick={() => updateCommand(msg.commandId, "confirm")} className="rounded bg-[#00e676] px-3 py-1.5 text-xs font-semibold text-black hover:bg-[#00c868]">Confirm action</button>
-                    <button type="button" onClick={() => updateCommand(msg.commandId, "cancel")} className="rounded border border-gray-700 px-3 py-1.5 text-xs text-gray-300 hover:text-white">Cancel</button>
+                    <button type="button" disabled={updatingCommand === msg.commandId} onClick={() => updateCommand(msg.commandId, "confirm")} className="rounded bg-[#00e676] px-3 py-1.5 text-xs font-semibold text-black hover:bg-[#00c868] disabled:opacity-50">Confirm action</button>
+                    <button type="button" disabled={updatingCommand === msg.commandId} onClick={() => updateCommand(msg.commandId, "cancel")} className="rounded border border-gray-700 px-3 py-1.5 text-xs text-gray-300 hover:text-white disabled:opacity-50">Cancel</button>
                   </div>
                 )}
               </div>

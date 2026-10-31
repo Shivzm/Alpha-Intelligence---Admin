@@ -1,4 +1,5 @@
 const express = require("express");
+const aiRoutes = require("./aiRoutes");
 const { getAdminData } = require("../controllers/adminController");
 const { requireAuth } = require("../controllers/authController");
 const {
@@ -121,6 +122,7 @@ router.post("/templates/id-cards/:id/preview", async (request, response, next) =
 	return previewTemplate(request, response, next);
 });
 router.post("/commands", submitCommand);
+router.use("/ai", aiRoutes);
 router.get("/commands", listCommands);
 router.get("/commands/:id", getCommand);
 router.post("/commands/:id/confirm", confirmCommand);

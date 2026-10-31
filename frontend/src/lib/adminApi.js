@@ -298,11 +298,22 @@ export const adminApi = {
     });
   },
 
+  analyzeCommand(input) {
+    return request("/api/admin/ai/search", {
+      method: "POST",
+      body: JSON.stringify({ query: input }),
+    });
+  },
+
   submitCommand(input, actionPayload) {
     return request("/api/admin/commands", {
       method: "POST",
       body: JSON.stringify({ input, actionPayload }),
     });
+  },
+
+  getCommand(id) {
+    return request(`/api/admin/commands/${encodeURIComponent(id)}`);
   },
 
   confirmCommand(id) {

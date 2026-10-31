@@ -11,6 +11,130 @@ const {
 const { getFirestoreDb } = require("../services/firestore");
 const { changeApplicationsStatus } = require("../services/applicationService");
 
+function getCommandReference(database, commandId) {
+  return database.collection("commands").doc(commandId);
+}
+
+function assertCommandExists(snapshot) {
+  if (!snapshot.exists) {
+    throw new ApiError(404, "NOT_FOUND", "The requested resource was not found.");
+  }
+}
+
+function assertCommandStatus(command, expectedStatus, errorCode, message) {
+  if (command.status !== expectedStatus) {
+    throw new ApiError(409, errorCode, message);
+  }
+}
+
+async function claimCommandForConfirmation(database, commandId, actorId) {
+  const reference = getCommandReference(database, commandId);
+  return database.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(reference);
+    assertCommandExists(snapshot);
+    const command = { id: snapshot.id, ...snapshot.data() };
+    assertCommandStatus(command, "pending", "COMMAND_NOT_PENDING", "Only pending commands can be confirmed.");
+    transaction.update(reference, {
+      status: "processing",
+      confirmationStartedAt: FieldValue.serverTimestamp(),
+      confirmedBy: actorId,
+    });
+    return command;
+  });
+}
+
+async function completeCommandWithAudit(database, { commandId, actorId, requestId, proposedAction }) {
+  const reference = getCommandReference(database, commandId);
+  const auditReference = database.collection("auditLogs").doc();
+  await database.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(reference);
+    assertCommandExists(snapshot);
+    const command = snapshot.data();
+    assertCommandStatus(command, "processing", "COMMAND_NOT_PROCESSING", "The command is not being processed.");
+    const timestamp = FieldValue.serverTimestamp();
+    transaction.update(reference, {
+      status: "completed",
+      confirmedAt: timestamp,
+    });
+    transaction.create(auditReference, {
+      actorType: "admin",
+      actorId,
+      action: "command.confirmed",
+      entity: "command",
+      entityId: commandId,
+      requestId,
+      before: { status: "processing" },
+      after: { status: "completed", proposedAction },
+      source: "ui",
+      at: timestamp,
+      createdAt: timestamp,
+    });
+  });
+}
+
+async function failCommandWithAudit(database, { commandId, actorId, requestId, errorCode }) {
+  const reference = getCommandReference(database, commandId);
+  const auditReference = database.collection("auditLogs").doc();
+  const safeErrorCode = typeof errorCode === "string" && /^[A-Z0-9_]{1,80}$/.test(errorCode)
+    ? errorCode
+    : "ACTION_FAILED";
+  await database.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(reference);
+    assertCommandExists(snapshot);
+    const command = snapshot.data();
+    assertCommandStatus(command, "processing", "COMMAND_NOT_PROCESSING", "The command is not being processed.");
+    const timestamp = FieldValue.serverTimestamp();
+    transaction.update(reference, {
+      status: "failed",
+      failureCode: safeErrorCode,
+      failedAt: timestamp,
+    });
+    transaction.create(auditReference, {
+      actorType: "admin",
+      actorId,
+      action: "command.confirmation_failed",
+      entity: "command",
+      entityId: commandId,
+      requestId,
+      before: { status: "processing" },
+      after: { status: "failed", errorCode: safeErrorCode },
+      source: "ui",
+      at: timestamp,
+      createdAt: timestamp,
+    });
+  });
+}
+
+async function cancelCommandAtomically(database, { commandId, actorId, requestId }) {
+  const reference = getCommandReference(database, commandId);
+  const auditReference = database.collection("auditLogs").doc();
+  await database.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(reference);
+    assertCommandExists(snapshot);
+    const command = snapshot.data();
+    assertCommandStatus(command, "pending", "COMMAND_NOT_PENDING", "Only pending commands can be cancelled.");
+    const timestamp = FieldValue.serverTimestamp();
+    transaction.update(reference, {
+      status: "cancelled",
+      cancelledBy: actorId,
+      cancelledAt: timestamp,
+    });
+    transaction.create(auditReference, {
+      actorType: "admin",
+      actorId,
+      action: "command.cancelled",
+      entity: "command",
+      entityId: commandId,
+      requestId,
+      before: { status: "pending" },
+      after: { status: "cancelled" },
+      source: "ui",
+      at: timestamp,
+      createdAt: timestamp,
+    });
+  });
+}
+
 function matchIntent(input, intents) {
   const normalizedInput = input.toLowerCase();
   let bestMatch = null;
@@ -102,45 +226,37 @@ async function executeCommandAction(command, request) {
 }
 
 async function confirmCommand(request, response) {
-  const command = await getDocument("commands", request.params.id);
-  if (command.status !== "pending") {
-    throw new ApiError(409, "COMMAND_NOT_PENDING", "Only pending commands can be confirmed.");
+  const database = getFirestoreDb();
+  const command = await claimCommandForConfirmation(database, request.params.id, request.user.email);
+  let result;
+  try {
+    result = await executeCommandAction(command, request);
+  } catch (error) {
+    await failCommandWithAudit(database, {
+      commandId: command.id,
+      actorId: request.user.email,
+      requestId: request.requestId,
+      errorCode: error.code,
+    });
+    throw error;
   }
-  const result = await executeCommandAction(command, request);
-  await updateDocument("commands", command.id, {
-    status: "completed",
-    confirmedBy: request.user.email,
-    confirmedAt: FieldValue.serverTimestamp(),
-  });
-  await writeAuditLog({
+  await completeCommandWithAudit(database, {
+    commandId: command.id,
     actorId: request.user.email,
-    action: "command.confirmed",
-    entity: "command",
-    entityId: command.id,
     requestId: request.requestId,
-    after: { status: "completed", proposedAction: command.proposedAction },
+    proposedAction: command.proposedAction,
   });
   return response.json({ data: { id: command.id, status: "completed", result } });
 }
 
 async function cancelCommand(request, response) {
-  const command = await getDocument("commands", request.params.id);
-  if (command.status !== "pending") {
-    throw new ApiError(409, "COMMAND_NOT_PENDING", "Only pending commands can be cancelled.");
-  }
-  const updated = await updateDocument("commands", command.id, {
-    status: "cancelled",
-    cancelledBy: request.user.email,
-    cancelledAt: FieldValue.serverTimestamp(),
-  });
-  await writeAuditLog({
+  const database = getFirestoreDb();
+  await cancelCommandAtomically(database, {
+    commandId: request.params.id,
     actorId: request.user.email,
-    action: "command.cancelled",
-    entity: "command",
-    entityId: command.id,
     requestId: request.requestId,
   });
-  return response.json({ data: updated });
+  return response.json({ data: await getDocument("commands", request.params.id) });
 }
 
 async function testIntent(request, response) {
@@ -172,11 +288,15 @@ async function deleteIntent(request, response) {
 
 module.exports = {
   cancelCommand,
+  cancelCommandAtomically,
+  claimCommandForConfirmation,
+  completeCommandWithAudit,
   confirmCommand,
   deleteIntent,
   getCommand,
   listCommands,
   matchIntent,
+  failCommandWithAudit,
   submitCommand,
   testIntent,
 };
