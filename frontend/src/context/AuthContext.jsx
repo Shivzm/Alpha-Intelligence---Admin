@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import adminApi from '../lib/adminApi';
 
@@ -38,11 +38,11 @@ export function AuthProvider({ children }) {
     navigate('/');
   };
 
-  const login = (sessionExpiresAt, redirectPath = '/admin-dashboard') => {
+  const login = useCallback((sessionExpiresAt, redirectPath = '/admin-dashboard') => {
     setIsAuthenticated(true);
     setExpiresAt(sessionExpiresAt);
     navigate(redirectPath);
-  };
+  }, [navigate]);
 
   useEffect(() => {
     if (!isAuthenticated || !expiresAt) return undefined;
